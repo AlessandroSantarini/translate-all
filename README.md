@@ -1,43 +1,58 @@
 # FoundryVTT Translate ALL
 
-A small module for FoundryVTT that enable to translate:
-- Spells 
-- Items
-- Abilities
-- Journal Entries
+A small module for FoundryVTT that allows you to translate:
+- Spells  
+- Items  
+- Abilities  
+- Journal Entries  
 
-into your specified language. 
+into your specified language.
 
-## How to set it up
-1. Go go to https://platform.openai.com/
-2. Obtain an API-KEY https://platform.openai.com/api-keys
-   - warning: the API will disappear, copy it in a SAFE PLACE  
-   - set the limit of spending. I'm using 4o-mini that is not very expensive. But please set limits, I'm not responsible for your spending. You have a couple of days of free trial. 
-   - Overall the cost is very low and depend onw how many words you send. Check the pricing!
-3. Set the Key inside FoundryVTT
-4. Translate ALL!
+---
 
-## How does it work
+## Setup Instructions
 
-There is a new button where a translation could be possible. 
-![](./images/before_translation.png)
+1. Visit [https://platform.openai.com/](https://platform.openai.com/)
+2. Get your API key: [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)  
+   - ⚠️ **Important:** The key will only be shown once. Copy it and store it somewhere safe.  
+   - Set a **spending limit**. I'm using `o4-mini`, which is very affordable. However, set a budget—I'm not responsible for any charges.  
+   - You’ll get a free trial with some usage credits.  
+   - Costs are generally low and depend on how many words you translate. Check [OpenAI pricing](https://openai.com/pricing).
+3. Enter the API key in the FoundryVTT module settings.
+4. You're ready to Translate ALL!
 
-after you click it just wait a couple of second and the text will be changed. 
-![](./images/after_translation.png)
+---
+
+## How It Works
+
+A new **"Translate"** button will appear where translation is supported:  
+![Before translation](./images/before_translation.png)
+
+After clicking it, wait a few seconds and the content will be automatically translated:  
+![After translation](./images/after_translation.png)
+
+---
 
 ## Limitations
 
-Is not possible, right now, to translate compendium item. You can import the item, or else, translate it and then assign it to the player. 
+Currently, it's not possible to translate items directly inside **compendiums**. To work around this:
 
-Or you can translate directly inside player or monster sheets the ability or spell. This will change the LOCAL usage of that. The same ability for two player need two translations right now. 
+- Import the item and then translate it, or  
+- Translate abilities/spells directly inside player or creature sheets.
 
-![](./images/differences.png)
+Note: Translations are **local to each instance**. If two players have the same ability, it needs to be translated separately for each one:  
+![Differences](./images/differences.png)
 
-## CHANGELOG
+---
 
-You can see the changelog [HERE](./CHANGELOG.md)
+## Changelog
 
-## Contribution
+View the full changelog [HERE](./CHANGELOG.md)
 
-Any contribution is welcomed, feature will be very slow and only if there is interest. For my personal use this is more then good. 
-You can find a list of todo [HERE](./TODO.md). Is not in order of priority.
+---
+
+## Contributions
+
+Contributions are welcome! Feature development will be slow and based on community interest. For personal use, the module is already sufficient.
+
+You can find the current to-do list [HERE](./TODO.md). Tasks are not listed in order of priority.
