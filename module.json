@@ -1,0 +1,17 @@
+{
+  "id": "translate-all",
+  "title": "Translate All",
+  "description": "Adds a button to translate item/spell descriptions using ChatGPT.",
+  "version": "1.0.1",
+  "type": "module",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "authors": [
+    {
+      "name": "Your Name"
+    }
+  ],
+  "esmodules": ["scripts/main.js"]
+}

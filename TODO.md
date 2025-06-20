@@ -1,0 +1,8 @@
+- Fix Types
+- Add spinner while translating and prevent user the interaction
+- auto close the window when finished
+- add prettier and rules for spacing and max length
+- check directory for D&D 5
+- better button
+- caching same chatgpt request locally
+- journal do not hot reload they need to be manually closed

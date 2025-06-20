@@ -1,0 +1,27 @@
+{
+    "compilerOptions": {
+        "types": ["fvtt-types"],
+        "target": "esnext",
+        "moduleResolution": "bundler",
+        "strict": true,
+        "module": "ESNext",
+        "isolatedModules": true,
+        "esModuleInterop": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "noImplicitAny": true,
+        "noImplicitThis": true,
+        "noUnusedParameters": false,
+        "noUnusedLocals": true,
+        "noFallthroughCasesInSwitch": true,
+        "strictFunctionTypes": true,
+        "strictNullChecks": true,
+        "strictPropertyInitialization": true,
+        "strictBindCallApply": true,
+        "lib": ["DOM", "DOM.Iterable", "ESNext"],
+        "rootDir": "src",
+        "outDir": "scripts",
+        "baseUrl": "src"
+    },
+    "include": ["./src/**/*", "src/types/index.ts"]
+}
