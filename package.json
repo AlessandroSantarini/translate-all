@@ -1,6 +1,6 @@
 {
     "name": "translate-all",
-    "version": "0.0.2",
+    "version": "1.0.1",
     "description": "Foundry VTT module to translate item and spell descriptions using ChatGPT.",
     "private": true,
     "type": "module",
@@ -10,7 +10,6 @@
     },
     "devDependencies": {
         "@league-of-foundry-developers/foundry-vtt-types": "^12.331.5",
-        "@types/sortablejs": "^1.15.8",
         "esbuild": "^0.20.1",
         "fvtt-types": "npm:@league-of-foundry-developers/foundry-vtt-types@^12.331.5",
         "prettier": "^3.5.3",
