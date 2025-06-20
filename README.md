@@ -20,10 +20,10 @@ into your specified language.
 ## How does it work
 
 There is a new button where a translation could be possible. 
-![](./images\before_translation.png)
+![](./images/before_translation.png)
 
 after you click it just wait a couple of second and the text will be changed. 
-![](./images\after_translation.png)
+![](./images/after_translation.png)
 
 ## Limitations
 
@@ -31,7 +31,7 @@ Is not possible, right now, to translate compendium item. You can import the ite
 
 Or you can translate directly inside player or monster sheets the ability or spell. This will change the LOCAL usage of that. The same ability for two player need two translations right now. 
 
-![](./images\differences.png)
+![](./images/differences.png)
 
 ## CHANGELOG
 
