@@ -1,19 +1,34 @@
 {
-    "name": "translate-all",
-    "version": "1.0.5",
-    "description": "Foundry VTT module to translate item and spell descriptions using ChatGPT.",
-    "private": true,
-    "type": "module",
-    "scripts": {
-        "build": "esbuild src/main.ts --bundle --keep-names --minify --sourcemap --outdir=scripts",
-        "dev": "esbuild src/main.ts --bundle --keep-names --watch --sourcemap --outdir=scripts"
-    },
-    "devDependencies": {
-        "@league-of-foundry-developers/foundry-vtt-types": "^12.331.5",
-        "esbuild": "^0.20.1",
-        "fvtt-types": "npm:@league-of-foundry-developers/foundry-vtt-types@^12.331.5",
-        "prettier": "^3.5.3",
-        "typescript": "^5.8.3",
-        "typescript-eslint": "^8.32.0"
-    }
+  "name": "translate-all",
+  "version": "1.0.5",
+  "description": "Foundry VTT module to translate item and spell descriptions using ChatGPT.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint ./src --ext .ts",
+    "lint:fix": "eslint ./src --ext .ts --fix",
+    "build": "esbuild src/main.ts --bundle --keep-names --minify --sourcemap --outdir=scripts",
+    "dev": "esbuild src/main.ts --bundle --keep-names --watch --sourcemap --outdir=scripts",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@eslint/compat": "^1.2.9",
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.27.0",
+    "@league-of-foundry-developers/foundry-vtt-types": "^12.331.5",
+    "@typescript-eslint/eslint-plugin": "^8.33.0",
+    "@typescript-eslint/parser": "^8.34.1",
+    "esbuild": "^0.20.1",
+    "eslint": "^9.27.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-typescript": "^3.10.1",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-prettier": "^5.4.1",
+    "fvtt-types": "npm:@league-of-foundry-developers/foundry-vtt-types@^12.331.5",
+    "globals": "^16.2.0",
+    "husky": "^9.1.7",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.32.0"
+  }
 }
