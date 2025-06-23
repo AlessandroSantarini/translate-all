@@ -1,5 +1,7 @@
 # FoundryVTT Translate ALL
 
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/AlessandroSantarini/translate-all?style=for-the-badge)
+
 A small module for FoundryVTT that allows you to translate:
 - Spells  
 - Items  

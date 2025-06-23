@@ -1,6 +1,9 @@
+# 1.0.6
+- Adding Github action to push release
+
 # 1.0.5
-- first working release
-- removed debug
+- First working release
+- Removed debug
 
 # 1.0.1
-- kick off
+- Kick off

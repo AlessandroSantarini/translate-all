@@ -2,7 +2,7 @@
   "id": "translate-all",
   "title": "Translate All",
   "description": "Adds a button to translate item/spell and Journal descriptions using ChatGPT.",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "type": "module",
   "compatibility": {
     "minimum": "13",
@@ -18,7 +18,7 @@
   "url": "https://github.com/AlessandroSantarini/translate-all",
   "readme": "https://github.com/AlessandroSantarini/translate-all/blob/master/README.md",
   "manifest": "https://raw.githubusercontent.com/AlessandroSantarini/translate-all/refs/heads/main/module.json",
-  "download": "https://github.com/AlessandroSantarini/translate-all/releases/download/1.0.5/module.zip",
+  "download": "https://github.com/AlessandroSantarini/translate-all/releases/download/1.0.6/module.zip",
   "changelog": "https://github.com/AlessandroSantarini/translate-all/blob/master/CHANGELOG.md",
   "bugs": "https://github.com/AlessandroSantarini/translate-all/issues",
   "esmodules": [
