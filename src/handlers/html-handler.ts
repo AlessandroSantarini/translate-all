@@ -24,12 +24,20 @@ export class HTMLHandler {
         return;
       }
       try {
-        await item.updateSource({ [path]: translated });
+        if (path.includes("system")) {
+          await item.update({ [path]: translated });
+        } else {
+          await item.updateSource({ [path]: translated });
+        }
       } catch (error) {
         ui?.notifications?.error(`Error updating item description: ${error}`);
       }
 
+      app.object.render(true);
+      await app.object.sheet?.close();
+
       await app.render(true);
+      await app.close();
     });
 
     header.append(btn);
