@@ -19,3 +19,7 @@ Hooks.on("renderJournalPageSheet", async (app: JournalPageSheet, html: JQuery<HT
 Hooks.on("renderItemSheet", async (app: ItemSheet, html: JQuery<HTMLElement>) => {
   DataHandler.getTranslatedDescription(app, html, SupportedEntries.ITEM, HTMLHandler.translateApp);
 });
+
+Hooks.on("renderItemSheet5e", async (app: ItemSheet, html: JQuery<HTMLElement>) => {
+  DataHandler.getTranslatedDescription(app, html, SupportedEntries.ITEM, HTMLHandler.translateApp);
+});

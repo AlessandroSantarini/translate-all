@@ -1,3 +1,7 @@
+# 1.1.0
+- added support for 5E items
+- added dropdown for system selection
+
 # 1.0.7
 - fixed problem with last foundry version 13.346
 

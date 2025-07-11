@@ -10,6 +10,10 @@ export class TranslateAllSettingHandler {
       config: true,
       type: String,
       default: SupportedSystems.PATHFINDER2E, // Default to Pathfinder 2e
+      choices: {
+        [SupportedSystems.DND5E]: "D&D 5e",
+        [SupportedSystems.PATHFINDER2E]: "Pathfinder 2e",
+      },
     },
     apiKey: {
       name: "translate-all.settings.apiKey.name",

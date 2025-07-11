@@ -27,8 +27,8 @@ export interface TranslateFunction {
 }
 
 export enum SupportedSystems {
-  DND5E = 'Dungeons & Dragons 5E',
-  PATHFINDER2E = 'Pathfinder 2E',
+  DND5E = 'D&D5E',
+  PATHFINDER2E = 'PF2E',
 }
 
 export enum SupportedLanguages {
@@ -44,7 +44,7 @@ export enum SupportedEntries {
 export const Directories = {
   [SupportedSystems.DND5E]: {
     [SupportedEntries.JOURNAL]: 'text.content',
-    [SupportedEntries.ITEM]: 'item',
+    [SupportedEntries.ITEM]: 'system.description.value',
   },
   [SupportedSystems.PATHFINDER2E]: {
     [SupportedEntries.JOURNAL]: 'text.content',

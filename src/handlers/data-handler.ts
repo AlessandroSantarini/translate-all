@@ -26,12 +26,11 @@ export class DataHandler {
   }
 
   static getDescriptionFromItem(app: ItemSheet, system: SupportedSystems): string | undefined {
-    const item = app.object;
     switch (system) {
       case SupportedSystems.PATHFINDER2E:
-        return (item.system as any).description.value; // TODO: fix this type casting
+        return (app.object.system as any).description.value; // TODO: fix this type casting
       case SupportedSystems.DND5E:
-        return ""; // TODO: IMPLEMENTATION NEEDED
+        return (app.options as any).document.system.description.value; // D&D 5E uses a different structure
       default:
         return undefined;
     }
