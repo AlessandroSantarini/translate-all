@@ -4,6 +4,7 @@ export interface TranslateConfigSettingConfig {
   'translate-all.apiKey': string;
   'translate-all.targetSystem': string;
   'translate-all.targetLanguage': string;
+  'translate-all.targetModel': string;
 }
 
 export type TranslateAllNamespace = typeof MODULE_NAME | ClientSettings.Namespace;
@@ -39,6 +40,15 @@ export enum SupportedLanguages {
 export enum SupportedEntries {
   JOURNAL = 'journal',
   ITEM = 'item',
+}
+
+export enum SupportedModels {
+  GPT_4O_MINI = 'gpt-4o-mini',
+  GPT_4_1 = 'gpt-4.1',
+  GPT_4_1_MINI = 'gpt-4.1-mini',
+  GPT_4_1_NANO = 'gpt-4.1-nano',
+  GPT_4_TURBO = 'gpt-4-turbo',
+  GPT_3_5_TURBO = 'gpt-3.5-turbo'
 }
 
 export const Directories = {

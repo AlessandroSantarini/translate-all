@@ -45,12 +45,19 @@ export class HTMLHandler {
     }
   }
 
-  private static update5eDescription(app: JournalPageSheet | ItemSheet, translation: string, path: string): void {
-    const item = app.document;
-    item.update({ [path]: translation });
-
-    app.render(true);
-    app.close();
+  private static async update5eDescription(
+    app: JournalPageSheet | ItemSheet,
+    translation: string,
+    path: string,
+  ): Promise<void> {
+    try {
+      const item = app.document;
+      await item.update({ [path]: translation });
+      app.render(true);
+      app.close();
+    } catch (error) {
+      ui?.notifications?.error(`Error updating item description: ${error}`);
+    }
   }
 
   private static async updatePF2EDescription(

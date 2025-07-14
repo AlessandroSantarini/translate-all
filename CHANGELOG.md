@@ -1,3 +1,7 @@
+# 1.1.1
+- added support journal for 5e
+- added dropdown selecting GPT model
+
 # 1.1.0
 - added support for 5E items
 - added dropdown for system selection

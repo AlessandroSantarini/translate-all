@@ -3,24 +3,8 @@
   "translate-all.settings.apiKey.hint": "Your secret API key to access ChatGPT.",
   "translate-all.settings.language.name": "Language",
   "translate-all.settings.language.hint": "The language to translate descriptions into.",
-  "translate-all.settings.language.default": "english",
-  "translate-all.settings.language.options": {
-    "en": "English",
-    "es": "Spanish",
-    "fr": "French",
-    "de": "German",
-    "it": "Italian",
-    "ja": "Japanese",
-    "zh-CN": "Chinese (Simplified)",
-    "zh-TW": "Chinese (Traditional)"
-  },
   "translate-all.settings.game.system.name": "Select Game System",
   "translate-all.settings.game.system.hint": "Choose the game system for which you want to translate descriptions.",
-  "translate-all.settings.game.system.default": "pathfinder2e",
-  "translate-all.settings.game.system.options": {
-    "pathfinder2e": "Pathfinder 2E",
-    "dnd5e": "Dungeons & Dragons 5E"
-  },
-  "translate-all.button.label": "Translate All Descriptions",
-  "translate-all.button.tooltip": "Click to translate all item and spell descriptions using ChatGPT."
+  "translate-all.settings.model.name": "Target Model",
+  "translate-all.settings.model.hint": "The model to use for translation. Default is 'GPT-4o Mini'."
 }

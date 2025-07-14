@@ -1,4 +1,4 @@
-import { KeyFor, SupportedSystems, TranslateAllNamespace } from "../types";
+import { KeyFor, SupportedModels, SupportedSystems, TranslateAllNamespace } from "../types";
 
 export class TranslateAllSettingHandler {
   gameSettings: Game["settings"] = game.settings!;
@@ -33,6 +33,22 @@ export class TranslateAllSettingHandler {
       default: "Italian", // Default to Italian
       masked: true,
     },
+    targetModel: {
+      name: "translate-all.settings.model.name",
+      hint: "translate-all.settings.model.hint",
+      scope: "world",
+      config: true,
+      type: String,
+      default: "gpt-4o-mini", // Default to gpt-4o-mini
+      choices: {
+        [SupportedModels.GPT_4O_MINI]: "GPT-4o Mini",
+        [SupportedModels.GPT_4_1]: "GPT-4.1",
+        [SupportedModels.GPT_4_1_MINI]: "GPT-4.1 Mini",
+        [SupportedModels.GPT_4_1_NANO]: "GPT-4.1 Nano",
+        [SupportedModels.GPT_4_TURBO]: "GPT-4 Turbo",
+        [SupportedModels.GPT_3_5_TURBO]: "GPT-3.5 Turbo",
+      },
+    },
   };
 
   constructor() {}
@@ -56,6 +72,11 @@ export class TranslateAllSettingHandler {
       "translate-all" as TranslateAllNamespace,
       "targetLanguage" as KeyFor<TranslateAllNamespace>,
       this.settings.targetLanguage,
+    );
+    this._register(
+      "translate-all" as TranslateAllNamespace,
+      "targetModel" as KeyFor<TranslateAllNamespace>,
+      this.settings.targetModel,
     );
   }
 

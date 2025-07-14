@@ -15,22 +15,22 @@ export class DataHandler {
   }
 
   static getDescriptionFromJournal(app: JournalPageSheet, system: SupportedSystems): string | undefined {
-    const item = app.object;
     switch (system) {
       case SupportedSystems.PATHFINDER2E:
+        return app.object.text.content || undefined;
       case SupportedSystems.DND5E:
-        return item.text.content;
+        return (app?.options as any).document.text.content || undefined; // TODO: fix this type casting
       default:
-        return item.text.content;
+        return undefined;
     }
   }
 
   static getDescriptionFromItem(app: ItemSheet, system: SupportedSystems): string | undefined {
     switch (system) {
       case SupportedSystems.PATHFINDER2E:
-        return (app.object.system as any).description.value; // TODO: fix this type casting
+        return (app?.object?.system as any).description.value; // TODO: fix this type casting
       case SupportedSystems.DND5E:
-        return (app.options as any).document.system.description.value; // D&D 5E uses a different structure
+        return (app?.options as any)?.document.system.description.value || undefined; // TODO: fix this type casting
       default:
         return undefined;
     }
@@ -49,7 +49,7 @@ export class DataHandler {
   ) {
     const description = DataHandler.getDescription(app, item);
     if (!description) {
-      ui?.notifications?.error("No description found for this journal page.");
+      // Do not enable button to translate if there is no description
       return;
     }
     const path = DataHandler.getPathToUpdate(item);

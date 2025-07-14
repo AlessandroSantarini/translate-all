@@ -19,8 +19,9 @@ export class Translator {
     const apiKey = TranslateAllSettingHandler.getSetting("translate-all", "apiKey");
     const system = TranslateAllSettingHandler.getSetting("translate-all", "targetSystem") as SupportedSystems;
     const language = TranslateAllSettingHandler.getSetting("translate-all", "targetLanguage") as SupportedLanguages;
-
+    const model = TranslateAllSettingHandler.getSetting("translate-all", "targetModel");
     const prompt = Translator.generatePrompt(system, language, description);
+
     try {
       response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
@@ -29,7 +30,7 @@ export class Translator {
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
+          model,
           messages: [{ role: "user", content: prompt }],
         }),
       });
