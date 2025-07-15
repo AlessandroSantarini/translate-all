@@ -6,11 +6,40 @@ export class Translator {
     return await Translator.translateWithChatGPT(description);
   }
 
-  static generatePrompt(system: SupportedSystems, language: SupportedLanguages, description: string): string {
-    const prompt = `Translate the following ${system} item/spell description into ${language}:\n\n
+  static async getPromptTemplate(path: string, description: string): Promise<string> {
+    const promptTemplatePath = TranslateAllSettingHandler.getSetting("translate-all", "promptTemplatePath") as string;
+    if (!promptTemplatePath) {
+      return "";
+    }
+    let promptTemplate = "";
+    if (promptTemplatePath) {
+      try {
+        const url = foundry.utils.getRoute(promptTemplatePath);
+        promptTemplate = await fetch(url).then((x) => x.text());
+      } catch (err) {
+        ui?.notifications?.warn(`Could not load prompt template. ${err}`);
+      }
+    }
+
+    return promptTemplate + `: ${description}`;
+  }
+
+  static async generatePrompt(
+    system: SupportedSystems,
+    language: SupportedLanguages,
+    description: string,
+  ): Promise<string> {
+    const path = TranslateAllSettingHandler.getSetting("translate-all", "promptTemplatePath") as string;
+    let prompt = "";
+    if (path) {
+      prompt = await Translator.getPromptTemplate(path, description);
+    } else {
+      prompt = `Translate the following ${system} item/spell description into ${language}:\n\n
             Keep the same format and structure, like HTML tags, and do not translate the item name or any specific game terms. 
             Don not add any additional code encapsulation or formatting. Just return the translated text.\n\n
-            ${description}."`;
+            ${description}.`;
+    }
+
     return prompt;
   }
 
@@ -51,7 +80,7 @@ export class Translator {
     const system = TranslateAllSettingHandler.getSetting("translate-all", "targetSystem") as SupportedSystems;
     const language = TranslateAllSettingHandler.getSetting("translate-all", "targetLanguage") as SupportedLanguages;
     const model = TranslateAllSettingHandler.getSetting("translate-all", "targetModel");
-    const prompt = Translator.generatePrompt(system, language, description);
+    const prompt = await Translator.generatePrompt(system, language, description);
 
     try {
       response = await fetch(`${apiEndpoint}/chat/completions`, {

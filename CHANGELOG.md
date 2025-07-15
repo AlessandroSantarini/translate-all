@@ -1,3 +1,6 @@
+# 1.2.1
+- added support for custom file prompt
+
 # 1.2.0
 - added support for different API endpoints
 

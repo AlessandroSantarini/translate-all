@@ -6,6 +6,7 @@ export interface TranslateConfigSettingConfig {
   'translate-all.targetLanguage': string;
   'translate-all.targetModel': string;
   'translate-all.apiEndpoint': string;
+  'translate-all.promptTemplatePath': string;
 }
 
 export type TranslateAllNamespace = typeof MODULE_NAME | ClientSettings.Namespace;

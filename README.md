@@ -36,15 +36,9 @@ After clicking it, wait a few seconds and the content will be automatically tran
 
 ---
 
-## Limitations
+## Options 
 
-Currently, it's not possible to translate items directly inside **compendiums**. To work around this:
-
-- Import the item and then translate it, or  
-- Translate abilities/spells directly inside player or creature sheets.
-
-Note: Translations are **local to each instance**. If two players have the same ability, it needs to be translated separately for each one:  
-![Differences](./images/differences.png)
+- if you would like to use the default prompt leave empty the selection of the prompt file
 
 ---
 
