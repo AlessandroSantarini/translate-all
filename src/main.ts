@@ -3,13 +3,13 @@ import { HTMLHandler } from "handlers/html-handler";
 import { TranslateAllSettingHandler } from "handlers/settings-handler";
 import { SupportedEntries, SupportedSystems } from "types";
 
-Hooks.once("init", () => {
+Hooks.once("init", async () => {
   if (!game.settings) {
     ui?.notifications?.error(`Game settings are not available. This module requires Foundry VTT version 10 or later.`);
     return;
   }
   const settingHandler = new TranslateAllSettingHandler();
-  settingHandler.init();
+  await settingHandler.init();
 });
 
 Hooks.on("renderJournalPageSheet", async (app: JournalPageSheet, html: JQuery<HTMLElement>) => {

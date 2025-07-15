@@ -1,3 +1,4 @@
+import { Translator } from "../translator";
 import { KeyFor, SupportedModels, SupportedSystems, TranslateAllNamespace } from "../types";
 
 export class TranslateAllSettingHandler {
@@ -24,6 +25,14 @@ export class TranslateAllSettingHandler {
       default: "",
       masked: true,
     },
+    apiEndpoint: {
+      name: "translate-all.settings.apiEndpoint.name",
+      hint: "translate-all.settings.apiEndpoint.hint",
+      scope: "world",
+      config: true,
+      type: String,
+      default: "https://api.openai.com/v1",
+    },
     targetLanguage: {
       name: "translate-all.settings.language.name",
       hint: "translate-all.settings.language.hint",
@@ -39,25 +48,17 @@ export class TranslateAllSettingHandler {
       scope: "world",
       config: true,
       type: String,
-      default: "gpt-4o-mini", // Default to gpt-4o-mini
-      choices: {
-        [SupportedModels.GPT_4O_MINI]: "GPT-4o Mini",
-        [SupportedModels.GPT_4_1]: "GPT-4.1",
-        [SupportedModels.GPT_4_1_MINI]: "GPT-4.1 Mini",
-        [SupportedModels.GPT_4_1_NANO]: "GPT-4.1 Nano",
-        [SupportedModels.GPT_4_TURBO]: "GPT-4 Turbo",
-        [SupportedModels.GPT_3_5_TURBO]: "GPT-3.5 Turbo",
-      },
+      default: "gpt-4o-mini",
     },
   };
 
   constructor() {}
 
-  init(): void {
-    this._registerSettings();
+  async init(): Promise<void> {
+    await this._registerSettings();
   }
 
-  private _registerSettings(): void {
+  private async _registerSettings(): Promise<void> {
     this._register(
       "translate-all" as TranslateAllNamespace,
       "targetSystem" as KeyFor<TranslateAllNamespace>,
@@ -70,9 +71,18 @@ export class TranslateAllSettingHandler {
     );
     this._register(
       "translate-all" as TranslateAllNamespace,
+      "apiEndpoint" as KeyFor<TranslateAllNamespace>,
+      this.settings.apiEndpoint,
+    );
+    this._register(
+      "translate-all" as TranslateAllNamespace,
       "targetLanguage" as KeyFor<TranslateAllNamespace>,
       this.settings.targetLanguage,
     );
+    const models = await Translator.getModels();
+    if (models) {
+      this.settings.targetModel.choices = models;
+    }
     this._register(
       "translate-all" as TranslateAllNamespace,
       "targetModel" as KeyFor<TranslateAllNamespace>,
