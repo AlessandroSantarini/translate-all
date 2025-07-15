@@ -5,6 +5,7 @@ export interface TranslateConfigSettingConfig {
   'translate-all.targetSystem': string;
   'translate-all.targetLanguage': string;
   'translate-all.targetModel': string;
+  'translate-all.apiEndpoint': string;
 }
 
 export type TranslateAllNamespace = typeof MODULE_NAME | ClientSettings.Namespace;
