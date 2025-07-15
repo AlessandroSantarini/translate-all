@@ -1,5 +1,5 @@
 import { Translator } from "../translator";
-import { KeyFor, SupportedModels, SupportedSystems, TranslateAllNamespace } from "../types";
+import { KeyFor, SupportedSystems, TranslateAllNamespace } from "../types";
 
 export class TranslateAllSettingHandler {
   gameSettings: Game["settings"] = game.settings!;
@@ -49,6 +49,7 @@ export class TranslateAllSettingHandler {
       config: true,
       type: String,
       default: "gpt-4o-mini",
+      choices: {},
     },
   };
 

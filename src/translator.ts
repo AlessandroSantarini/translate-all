@@ -37,13 +37,10 @@ export class Translator {
     }
 
     const data = await response.json();
-    const models = data.data.reduce(
-      (acc: Record<string, string>, model: { id: string }) => {
-        acc[model.id] = model.id;
-        return acc;
-      },
-      {},
-    );
+    const models = data.data.reduce((acc: Record<string, string>, model: { id: string }) => {
+      acc[model.id] = model.id;
+      return acc;
+    }, {});
     return models;
   }
 
