@@ -15,22 +15,28 @@ export class DataHandler {
   }
 
   static getDescriptionFromJournal(app: JournalPageSheet, system: SupportedSystems): string | undefined {
+    const appAny = app as any;
+    const document = appAny?.document ?? appAny?.object ?? appAny?.options?.document;
+
     switch (system) {
       case SupportedSystems.PATHFINDER2E:
-        return app.object.text.content || undefined;
+        return document?.text?.content || undefined;
       case SupportedSystems.DND5E:
-        return (app?.options as any).document.text.content || undefined; // TODO: fix this type casting
+        return document?.text?.content || undefined;
       default:
         return undefined;
     }
   }
 
   static getDescriptionFromItem(app: ItemSheet, system: SupportedSystems): string | undefined {
+    const appAny = app as any;
+    const document = appAny?.document ?? appAny?.object ?? appAny?.options?.document;
+
     switch (system) {
       case SupportedSystems.PATHFINDER2E:
-        return (app?.object?.system as any).description.value; // TODO: fix this type casting
+        return document?.system?.description?.value || undefined;
       case SupportedSystems.DND5E:
-        return (app?.options as any)?.document.system.description.value || undefined; // TODO: fix this type casting
+        return document?.system?.description?.value || undefined;
       default:
         return undefined;
     }
@@ -43,7 +49,7 @@ export class DataHandler {
 
   static async getTranslatedDescription(
     app: JournalPageSheet | ItemSheet,
-    html: JQuery<HTMLElement>,
+    html: JQuery<HTMLElement> | HTMLElement,
     item: SupportedEntries,
     translateFN: TranslateFunction,
   ) {

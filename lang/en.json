@@ -8,5 +8,7 @@
   "translate-all.settings.game.system.name": "Select Game System",
   "translate-all.settings.game.system.hint": "Choose the game system for which you want to translate descriptions.",
   "translate-all.settings.model.name": "Target Model",
-  "translate-all.settings.model.hint": "The model to use for translation. Default is 'GPT-4o Mini'."
+  "translate-all.settings.model.hint": "The model to use for translation. Default is 'GPT-4o Mini'.",
+  "translate-all.settings.promptTemplatePath.name": "Prompt Template File",
+  "translate-all.settings.promptTemplatePath.hint": "Path to a text file containing a custom prompt (e.g., /modules/translate-all/prompts/dnd5e.txt)"
 }

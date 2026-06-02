@@ -51,6 +51,15 @@ export class TranslateAllSettingHandler {
       default: "gpt-4o-mini",
       choices: {},
     },
+    promptModel: {
+      name: "translate-all.settings.promptTemplatePath.name",
+      hint: "translate-all.settings.promptTemplatePath.hint",
+      scope: "world",
+      config: true,
+      type: String,
+      filePicker: true, // 👈 Enables the file picker
+      default: "",
+    },
   };
 
   constructor() {}
@@ -84,10 +93,16 @@ export class TranslateAllSettingHandler {
     if (models) {
       this.settings.targetModel.choices = models;
     }
+
     this._register(
       "translate-all" as TranslateAllNamespace,
       "targetModel" as KeyFor<TranslateAllNamespace>,
       this.settings.targetModel,
+    );
+    this._register(
+      "translate-all" as TranslateAllNamespace,
+      "promptTemplatePath" as KeyFor<TranslateAllNamespace>,
+      this.settings.promptModel,
     );
   }
 

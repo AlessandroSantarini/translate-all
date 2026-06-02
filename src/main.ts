@@ -33,3 +33,21 @@ Hooks.on("renderJournalEntryPageSheet", async (app: JournalPageSheet, html: JQue
   }
   DataHandler.getTranslatedDescription(app, html, SupportedEntries.JOURNAL, HTMLHandler.translateApp);
 });
+
+Hooks.on("renderApplicationV2", async (app: any, html: HTMLElement) => {
+  const documentName = app?.document?.documentName;
+
+  if (documentName === "Item") {
+    DataHandler.getTranslatedDescription(app as ItemSheet, html, SupportedEntries.ITEM, HTMLHandler.translateApp);
+    return;
+  }
+
+  if (documentName === "JournalEntryPage") {
+    DataHandler.getTranslatedDescription(
+      app as JournalPageSheet,
+      html,
+      SupportedEntries.JOURNAL,
+      HTMLHandler.translateApp,
+    );
+  }
+});

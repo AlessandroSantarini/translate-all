@@ -6,6 +6,7 @@ export interface TranslateConfigSettingConfig {
   'translate-all.targetLanguage': string;
   'translate-all.targetModel': string;
   'translate-all.apiEndpoint': string;
+  'translate-all.promptTemplatePath': string;
 }
 
 export type TranslateAllNamespace = typeof MODULE_NAME | ClientSettings.Namespace;
@@ -22,7 +23,7 @@ export type KeyFor<N extends TranslateAllNamespace> = GetKeys<
 export interface TranslateFunction {
   (
     app: JournalPageSheet | ItemSheet,
-    html: JQuery<HTMLElement>,
+    html: JQuery<HTMLElement> | HTMLElement,
     description: string,
     path: string,
   ): Promise<void>;
