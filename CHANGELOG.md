@@ -1,3 +1,6 @@
+# 2.0.0
+- Foundry V14
+
 # 1.2.1
 - added support for custom file prompt
 
