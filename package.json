@@ -8,6 +8,7 @@
     "lint": "eslint ./src --ext .ts",
     "lint:fix": "eslint ./src --ext .ts --fix",
     "build": "esbuild src/main.ts --bundle --keep-names --minify --sourcemap --outdir=scripts",
+    "build:local": "esbuild src/main.ts --bundle --keep-names --minify --sourcemap --outdir=scripts && powershell -ExecutionPolicy Bypass -File deploy.ps1",
     "dev": "esbuild src/main.ts --bundle --keep-names --watch --sourcemap --outdir=scripts",
     "prepare": "husky"
   },
