@@ -1,28 +1,44 @@
 export const MODULE_NAME = 'translate-all';
 
-export interface TranslateConfigSettingConfig {
-  'translate-all.apiKey': string;
-  'translate-all.targetSystem': string;
-  'translate-all.targetLanguage': string;
-  'translate-all.targetModel': string;
-  'translate-all.apiEndpoint': string;
-  'translate-all.promptTemplatePath': string;
+declare global {
+  interface SettingConfig {
+    'translate-all.targetSystem': SupportedSystems;
+    'translate-all.apiKey': string;
+    'translate-all.apiEndpoint': string;
+    'translate-all.targetLanguage': SupportedLanguages;
+    'translate-all.targetModel': string;
+    'translate-all.promptTemplatePath': string;
+  }
+
+  namespace ClientSettings {
+    interface RegisterOptions<T extends Type> {
+      masked?: boolean;
+      filePicker?: boolean;
+    }
+  }
 }
 
-export type TranslateAllNamespace = typeof MODULE_NAME | ClientSettings.Namespace;
+export interface SheetLikeDocument {
+  text?: { content?: string };
+  system?: unknown;
+  update?: (data: Record<string, string>) => unknown;
+  updateSource?: (data: Record<string, string>) => unknown;
+  render?(force?: boolean): void;
+  sheet?: { close?(...args: unknown[]): unknown } | null;
+}
 
-type GetKeys<
-  N extends string,
-  SettingPath extends PropertyKey,
-> = SettingPath extends `${N}.${infer Name}` ? Name : never;
-export type KeyFor<N extends TranslateAllNamespace> = GetKeys<
-  N,
-  keyof TranslateConfigSettingConfig
->;
+export interface SheetLikeApp {
+  document?: SheetLikeDocument;
+  object?: SheetLikeDocument;
+  options?: object;
+  element?: HTMLElement | JQuery<HTMLElement>;
+  render(...args: unknown[]): unknown;
+  close(...args: unknown[]): unknown;
+}
 
 export interface TranslateFunction {
   (
-    app: JournalPageSheet | ItemSheet,
+    app: SheetLikeApp,
     html: JQuery<HTMLElement> | HTMLElement,
     description: string,
     path: string,

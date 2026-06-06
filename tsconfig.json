@@ -21,6 +21,7 @@
         "lib": ["DOM", "DOM.Iterable", "ESNext"],
         "rootDir": "src",
         "outDir": "scripts",
+        "ignoreDeprecations": "6.0",
         "baseUrl": "src"
     },
     "include": ["./src/**/*", "src/types/index.ts"]

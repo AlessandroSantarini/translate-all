@@ -1,7 +1,30 @@
 import { DataHandler } from "handlers/data-handler";
 import { HTMLHandler } from "handlers/html-handler";
 import { TranslateAllSettingHandler } from "handlers/settings-handler";
-import { SupportedEntries, SupportedSystems } from "types";
+import { SheetLikeApp, SupportedEntries } from "types";
+
+interface AppWithDocumentName {
+  document?: {
+    documentName?: string;
+  };
+}
+
+function isObject(value: unknown): value is Record<PropertyKey, unknown> {
+  return !!value && typeof value === "object";
+}
+
+function isSheetLikeApp(value: unknown): value is SheetLikeApp {
+  if (!isObject(value)) return false;
+  return typeof Reflect.get(value, "render") === "function" && typeof Reflect.get(value, "close") === "function";
+}
+
+function hasDocumentName(value: unknown): value is AppWithDocumentName {
+  if (!isObject(value)) return false;
+  const document = Reflect.get(value, "document");
+  if (!isObject(document)) return false;
+  const documentName = Reflect.get(document, "documentName");
+  return typeof documentName === "string";
+}
 
 Hooks.once("init", async () => {
   if (!game.settings) {
@@ -10,10 +33,6 @@ Hooks.once("init", async () => {
   }
   const settingHandler = new TranslateAllSettingHandler();
   await settingHandler.init();
-});
-
-Hooks.on("renderJournalPageSheet", async (app: JournalPageSheet, html: JQuery<HTMLElement>) => {
-  DataHandler.getTranslatedDescription(app, html, SupportedEntries.JOURNAL, HTMLHandler.translateApp);
 });
 
 Hooks.on("renderItemSheet", async (app: ItemSheet, html: JQuery<HTMLElement>) => {
@@ -25,29 +44,19 @@ Hooks.on("renderItemSheet5e", async (app: ItemSheet, html: JQuery<HTMLElement>) 
 });
 
 Hooks.on("renderJournalEntryPageSheet", async (app: JournalPageSheet, html: JQuery<HTMLElement>) => {
-  const system = TranslateAllSettingHandler.getSetting("translate-all", "targetSystem") as SupportedSystems;
-  if (system !== SupportedSystems.DND5E) {
-    // eslint-disable-next-line no-console
-    console.warn("This feature is only available for D&D 5E.");
-    return;
-  }
   DataHandler.getTranslatedDescription(app, html, SupportedEntries.JOURNAL, HTMLHandler.translateApp);
 });
 
-Hooks.on("renderApplicationV2", async (app: any, html: HTMLElement) => {
-  const documentName = app?.document?.documentName;
+Hooks.on("renderApplicationV2", async (app: unknown, html: HTMLElement) => {
+  if (!isSheetLikeApp(app) || !hasDocumentName(app)) return;
+  const documentName = app.document?.documentName;
 
   if (documentName === "Item") {
-    DataHandler.getTranslatedDescription(app as ItemSheet, html, SupportedEntries.ITEM, HTMLHandler.translateApp);
+    DataHandler.getTranslatedDescription(app, html, SupportedEntries.ITEM, HTMLHandler.translateApp);
     return;
   }
 
   if (documentName === "JournalEntryPage") {
-    DataHandler.getTranslatedDescription(
-      app as JournalPageSheet,
-      html,
-      SupportedEntries.JOURNAL,
-      HTMLHandler.translateApp,
-    );
+    DataHandler.getTranslatedDescription(app, html, SupportedEntries.JOURNAL, HTMLHandler.translateApp);
   }
 });

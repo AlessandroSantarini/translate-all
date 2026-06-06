@@ -1,10 +1,10 @@
 import { Translator } from "translator";
-import { SupportedSystems } from "types";
+import { SheetLikeApp, SupportedSystems } from "types";
 import { TranslateAllSettingHandler } from "./settings-handler";
 
 export class HTMLHandler {
   static async translateApp(
-    app: JournalPageSheet | ItemSheet,
+    app: SheetLikeApp,
     html: JQuery<HTMLElement> | HTMLElement,
     description: string,
     path: string,
@@ -24,31 +24,39 @@ export class HTMLHandler {
     btn.textContent = "Translate Description";
 
     btn.addEventListener("click", async () => {
-      const translated = await Translator.translate(description);
-      if (!translated) {
-        ui?.notifications?.error("Translation failed or returned empty.");
-        return;
+      if (btn.dataset.loading === "true") return;
+
+      HTMLHandler.setButtonLoadingState(btn, true);
+
+      try {
+        const translated = await Translator.translate(description);
+        if (!translated) {
+          ui?.notifications?.error("Translation failed or returned empty.");
+          return;
+        }
+
+        await HTMLHandler.updateDescription(app, translated, path);
+      } finally {
+        HTMLHandler.setButtonLoadingState(btn, false);
       }
-      await HTMLHandler.updateDescription(app, translated, path);
     });
 
     header.append(btn);
   }
 
-  private static resolveRootElement(
-    app: JournalPageSheet | ItemSheet,
-    html: JQuery<HTMLElement> | HTMLElement,
-  ): HTMLElement | null {
-    const htmlAny = html as any;
-
+  private static resolveRootElement(app: SheetLikeApp, html: JQuery<HTMLElement> | HTMLElement): HTMLElement | null {
     if (html instanceof HTMLElement) return html;
-    if (htmlAny?.[0] instanceof HTMLElement) return htmlAny[0];
+    if (HTMLHandler.hasHTMLElementAtZeroIndex(html)) return html[0];
 
-    const appAny = app as any;
-    if (appAny?.element instanceof HTMLElement) return appAny.element;
-    if (appAny?.element?.[0] instanceof HTMLElement) return appAny.element[0];
+    if (app.element instanceof HTMLElement) return app.element;
+    if (HTMLHandler.hasHTMLElementAtZeroIndex(app.element)) return app.element[0];
 
     return null;
+  }
+
+  private static hasHTMLElementAtZeroIndex(value: unknown): value is { 0: HTMLElement } {
+    if (!value || typeof value !== "object") return false;
+    return Reflect.get(value, 0) instanceof HTMLElement;
   }
 
   private static resolveHeaderContainer(root: HTMLElement): HTMLElement | null {
@@ -61,12 +69,39 @@ export class HTMLHandler {
     return root.querySelector<HTMLElement>("header");
   }
 
-  private static async updateDescription(
-    app: JournalPageSheet | ItemSheet,
-    translation: string,
-    path: string,
-  ): Promise<void> {
-    const system = TranslateAllSettingHandler.getSetting("translate-all", "targetSystem") as SupportedSystems;
+  private static setButtonLoadingState(button: HTMLButtonElement, isLoading: boolean): void {
+    if (isLoading) {
+      button.dataset.loading = "true";
+      button.disabled = true;
+      button.innerHTML =
+        '<span style="display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-bottom-color:transparent;border-radius:50%;margin-right:6px;vertical-align:middle;animation:translate-all-spin 0.8s linear infinite;"></span>Translating...';
+
+      HTMLHandler.ensureSpinnerStyles();
+      return;
+    }
+
+    button.dataset.loading = "false";
+    button.disabled = false;
+    button.textContent = "Translate Description";
+  }
+
+  private static ensureSpinnerStyles(): void {
+    if (document.getElementById("translate-all-spinner-style")) return;
+
+    const style = document.createElement("style");
+    style.id = "translate-all-spinner-style";
+    style.textContent = `
+      @keyframes translate-all-spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+    `;
+
+    document.head.append(style);
+  }
+
+  private static async updateDescription(app: SheetLikeApp, translation: string, path: string): Promise<void> {
+    const system = TranslateAllSettingHandler.getSetting("translate-all", "targetSystem");
     if (system === SupportedSystems.DND5E) {
       await this.update5eDescription(app, translation, path);
     } else if (system === SupportedSystems.PATHFINDER2E) {
@@ -74,15 +109,10 @@ export class HTMLHandler {
     }
   }
 
-  private static async update5eDescription(
-    app: JournalPageSheet | ItemSheet,
-    translation: string,
-    path: string,
-  ): Promise<void> {
+  private static async update5eDescription(app: SheetLikeApp, translation: string, path: string): Promise<void> {
     try {
-      const appAny = app as any;
-      const item = appAny.document ?? appAny.object;
-      await item?.update({ [path]: translation });
+      const item = app.document ?? app.object;
+      await item?.update?.({ [path]: translation });
       app.render(true);
       app.close();
     } catch (error) {
@@ -90,17 +120,12 @@ export class HTMLHandler {
     }
   }
 
-  private static async updatePF2EDescription(
-    app: JournalPageSheet | ItemSheet,
-    translation: string,
-    path: string,
-  ): Promise<void> {
-    const appAny = app as any;
-    const item = appAny.object ?? appAny.document;
+  private static async updatePF2EDescription(app: SheetLikeApp, translation: string, path: string): Promise<void> {
+    const item = app.object ?? app.document;
 
     try {
       if (path.includes("system")) {
-        await item?.update({ [path]: translation });
+        await item?.update?.({ [path]: translation });
       } else {
         await item?.updateSource?.({ [path]: translation });
       }
@@ -110,8 +135,5 @@ export class HTMLHandler {
 
     item?.render?.(true);
     await item?.sheet?.close?.();
-
-    await app.render(true);
-    await app.close();
   }
 }

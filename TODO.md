@@ -1,5 +1,3 @@
-- Fix Types
-- Add spinner while translating and prevent user the interaction
 - better button (use CSS and module style)
 - caching same chatgpt request locally
 - journal need to be manually closed (Pf2e)

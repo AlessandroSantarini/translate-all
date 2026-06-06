@@ -1,3 +1,10 @@
+# 2.0.1
+- Added loading spinner on the Translate Description button while translation and document update are in progress
+- Improved TypeScript typing across all handlers — removed `any` and unsafe casts in favour of structural interfaces (`SheetLikeApp`, `SheetLikeDocument`)
+- Introduced generic `getSetting<T>` to eliminate call-site casts for settings retrieval
+- Added runtime type guards for the `renderApplicationV2` hook
+- Fixed TS deprecation warning for `baseUrl` in `tsconfig.json`
+
 # 2.0.0
 - Foundry V14
 

@@ -7,7 +7,7 @@ export class Translator {
   }
 
   static async getPromptTemplate(path: string, description: string): Promise<string> {
-    const promptTemplatePath = TranslateAllSettingHandler.getSetting("translate-all", "promptTemplatePath") as string;
+    const promptTemplatePath = TranslateAllSettingHandler.getSetting("translate-all", "promptTemplatePath");
     if (!promptTemplatePath) {
       return "";
     }
@@ -29,7 +29,7 @@ export class Translator {
     language: SupportedLanguages,
     description: string,
   ): Promise<string> {
-    const path = TranslateAllSettingHandler.getSetting("translate-all", "promptTemplatePath") as string;
+    const path = TranslateAllSettingHandler.getSetting("translate-all", "promptTemplatePath");
     let prompt = "";
     if (path) {
       prompt = await Translator.getPromptTemplate(path, description);
@@ -77,8 +77,8 @@ export class Translator {
     let response;
     const apiKey = TranslateAllSettingHandler.getSetting("translate-all", "apiKey");
     const apiEndpoint = TranslateAllSettingHandler.getSetting("translate-all", "apiEndpoint");
-    const system = TranslateAllSettingHandler.getSetting("translate-all", "targetSystem") as SupportedSystems;
-    const language = TranslateAllSettingHandler.getSetting("translate-all", "targetLanguage") as SupportedLanguages;
+    const system = TranslateAllSettingHandler.getSetting("translate-all", "targetSystem");
+    const language = TranslateAllSettingHandler.getSetting("translate-all", "targetLanguage");
     const model = TranslateAllSettingHandler.getSetting("translate-all", "targetModel");
     const prompt = await Translator.generatePrompt(system, language, description);
 

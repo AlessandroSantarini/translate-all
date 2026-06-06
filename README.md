@@ -18,8 +18,8 @@ into your specified language.
 1. Visit [https://platform.openai.com/](https://platform.openai.com/)
 2. Get your API key: [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)  
    - ⚠️ **Important:** The key will only be shown once. Copy it and store it somewhere safe.  
-   - Set a **spending limit**. I'm using `o4-mini`, which is very affordable. However, set a budget—I'm not responsible for any charges.  
-   - You’ll get a free trial with some usage credits.  
+   - Set a **spending limit**. I'm using `o4-mini`, which is very affordable. Still, set a budget — I'm not responsible for any charges.  
+   - You'll get a free trial with some usage credits.  
    - Costs are generally low and depend on how many words you translate. Check [OpenAI pricing](https://openai.com/pricing).
 3. Enter the API key in the FoundryVTT module settings.
 4. You're ready to Translate ALL!
@@ -31,14 +31,24 @@ into your specified language.
 A new **"Translate"** button will appear where translation is supported:  
 ![Before translation](./images/before_translation.png)
 
-After clicking it, wait a few seconds and the content will be automatically translated:  
-![After translation](./images/after_translation.png)
+After clicking it, a spinner will appear. Wait for it to finish:  
+![After translation](./images/during_translation.png)
+
+The page will automatically close when finished, and the translation should be in place.
 
 ---
 
-## Options 
+## Known Issues
 
-- if you would like to use the default prompt leave empty the selection of the prompt file
+- On some occasions, an extra button may appear in the journal. Do not click it.
+
+![Known Issue](./images/know_issue.png)
+
+---
+
+## Options
+
+- If you would like to use the default prompt, leave the prompt file selection empty.
 
 ---
 

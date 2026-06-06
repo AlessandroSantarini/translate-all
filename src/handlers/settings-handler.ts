@@ -1,8 +1,7 @@
 import { Translator } from "../translator";
-import { KeyFor, SupportedSystems, TranslateAllNamespace } from "../types";
+import { SupportedLanguages, SupportedSystems } from "../types";
 
 export class TranslateAllSettingHandler {
-  gameSettings: Game["settings"] = game.settings!;
   readonly settings = {
     targetSystem: {
       name: "translate-all.settings.game.system.name",
@@ -10,7 +9,7 @@ export class TranslateAllSettingHandler {
       scope: "world",
       config: true,
       type: String,
-      default: SupportedSystems.PATHFINDER2E, // Default to Pathfinder 2e
+      default: SupportedSystems.PATHFINDER2E,
       choices: {
         [SupportedSystems.DND5E]: "D&D 5e",
         [SupportedSystems.PATHFINDER2E]: "Pathfinder 2e",
@@ -39,7 +38,7 @@ export class TranslateAllSettingHandler {
       scope: "world",
       config: true,
       type: String,
-      default: "Italian", // Default to Italian
+      default: SupportedLanguages.ITALIAN,
       masked: true,
     },
     targetModel: {
@@ -49,74 +48,40 @@ export class TranslateAllSettingHandler {
       config: true,
       type: String,
       default: "gpt-4o-mini",
-      choices: {},
+      choices: {} as Record<string, string>,
     },
-    promptModel: {
+    promptTemplatePath: {
       name: "translate-all.settings.promptTemplatePath.name",
       hint: "translate-all.settings.promptTemplatePath.hint",
       scope: "world",
       config: true,
       type: String,
-      filePicker: true, // 👈 Enables the file picker
+      filePicker: true,
       default: "",
     },
-  };
-
-  constructor() {}
+  } as const satisfies Record<string, ClientSettings.RegisterOptions<ClientSettings.Type>>;
 
   async init(): Promise<void> {
-    await this._registerSettings();
-  }
-
-  private async _registerSettings(): Promise<void> {
-    this._register(
-      "translate-all" as TranslateAllNamespace,
-      "targetSystem" as KeyFor<TranslateAllNamespace>,
-      this.settings.targetSystem,
-    );
-    this._register(
-      "translate-all" as TranslateAllNamespace,
-      "apiKey" as KeyFor<TranslateAllNamespace>,
-      this.settings.apiKey,
-    );
-    this._register(
-      "translate-all" as TranslateAllNamespace,
-      "apiEndpoint" as KeyFor<TranslateAllNamespace>,
-      this.settings.apiEndpoint,
-    );
-    this._register(
-      "translate-all" as TranslateAllNamespace,
-      "targetLanguage" as KeyFor<TranslateAllNamespace>,
-      this.settings.targetLanguage,
-    );
-    const models = await Translator.getModels();
-    if (models) {
-      this.settings.targetModel.choices = models;
-    }
-
-    this._register(
-      "translate-all" as TranslateAllNamespace,
-      "targetModel" as KeyFor<TranslateAllNamespace>,
-      this.settings.targetModel,
-    );
-    this._register(
-      "translate-all" as TranslateAllNamespace,
-      "promptTemplatePath" as KeyFor<TranslateAllNamespace>,
-      this.settings.promptModel,
-    );
-  }
-
-  // TODO: Fix this type casting
-  _register(namespace: TranslateAllNamespace, key: KeyFor<TranslateAllNamespace>, config: any): void {
-    this.gameSettings.register(namespace as "core", key as KeyFor<"core">, config);
-  }
-
-  // TODO: Fix this type casting
-  static getSetting(
-    namespace: TranslateAllNamespace,
-    key: KeyFor<TranslateAllNamespace>,
-  ): string | boolean | number | object | undefined {
     const gameSettings = game.settings!;
-    return gameSettings.get(namespace as "core", key as KeyFor<"core">);
+
+    gameSettings.register("translate-all", "targetSystem", this.settings.targetSystem);
+    gameSettings.register("translate-all", "apiKey", this.settings.apiKey);
+    gameSettings.register("translate-all", "apiEndpoint", this.settings.apiEndpoint);
+    gameSettings.register("translate-all", "targetLanguage", this.settings.targetLanguage);
+
+    const models = await Translator.getModels();
+    const targetModelConfig = {
+      ...this.settings.targetModel,
+      choices: models ?? this.settings.targetModel.choices,
+    };
+    gameSettings.register("translate-all", "targetModel", targetModelConfig);
+    gameSettings.register("translate-all", "promptTemplatePath", this.settings.promptTemplatePath);
+  }
+
+  static getSetting<K extends ClientSettings.KeyFor<"translate-all">>(
+    namespace: "translate-all",
+    key: K,
+  ): ClientSettings.SettingInitializedType<"translate-all", K> {
+    return game.settings!.get(namespace, key);
   }
 }

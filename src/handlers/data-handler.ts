@@ -1,22 +1,28 @@
-import { Directories, SupportedEntries, SupportedSystems, TranslateFunction } from "types";
+import {
+  Directories,
+  SheetLikeApp,
+  SheetLikeDocument,
+  SupportedEntries,
+  SupportedSystems,
+  TranslateFunction,
+} from "types";
 import { TranslateAllSettingHandler } from "./settings-handler";
 
 export class DataHandler {
-  static getDescription(app: JournalPageSheet | ItemSheet, type: SupportedEntries) {
-    const system = TranslateAllSettingHandler.getSetting("translate-all", "targetSystem") as SupportedSystems;
+  static getDescription(app: SheetLikeApp, type: SupportedEntries): string | undefined {
+    const system = TranslateAllSettingHandler.getSetting("translate-all", "targetSystem");
 
     if (type === SupportedEntries.JOURNAL) {
-      return DataHandler.getDescriptionFromJournal(app as JournalPageSheet, system);
+      return DataHandler.getDescriptionFromJournal(app, system);
     } else if (type === SupportedEntries.ITEM) {
-      return DataHandler.getDescriptionFromItem(app as ItemSheet, system);
+      return DataHandler.getDescriptionFromItem(app, system);
     }
 
     return undefined;
   }
 
-  static getDescriptionFromJournal(app: JournalPageSheet, system: SupportedSystems): string | undefined {
-    const appAny = app as any;
-    const document = appAny?.document ?? appAny?.object ?? appAny?.options?.document;
+  static getDescriptionFromJournal(app: SheetLikeApp, system: SupportedSystems): string | undefined {
+    const document = DataHandler.resolveDocument(app);
 
     switch (system) {
       case SupportedSystems.PATHFINDER2E:
@@ -28,27 +34,26 @@ export class DataHandler {
     }
   }
 
-  static getDescriptionFromItem(app: ItemSheet, system: SupportedSystems): string | undefined {
-    const appAny = app as any;
-    const document = appAny?.document ?? appAny?.object ?? appAny?.options?.document;
+  static getDescriptionFromItem(app: SheetLikeApp, system: SupportedSystems): string | undefined {
+    const document = DataHandler.resolveDocument(app);
 
     switch (system) {
       case SupportedSystems.PATHFINDER2E:
-        return document?.system?.description?.value || undefined;
+        return DataHandler.getDescriptionValueFromSystem(document);
       case SupportedSystems.DND5E:
-        return document?.system?.description?.value || undefined;
+        return DataHandler.getDescriptionValueFromSystem(document);
       default:
         return undefined;
     }
   }
 
   static getPathToUpdate(item: SupportedEntries): string {
-    const system = TranslateAllSettingHandler.getSetting("translate-all", "targetSystem") as SupportedSystems;
+    const system = TranslateAllSettingHandler.getSetting("translate-all", "targetSystem");
     return Directories[system][item];
   }
 
   static async getTranslatedDescription(
-    app: JournalPageSheet | ItemSheet,
+    app: SheetLikeApp,
     html: JQuery<HTMLElement> | HTMLElement,
     item: SupportedEntries,
     translateFN: TranslateFunction,
@@ -60,5 +65,23 @@ export class DataHandler {
     }
     const path = DataHandler.getPathToUpdate(item);
     translateFN(app, html, description, path);
+  }
+
+  private static resolveDocument(app: SheetLikeApp): SheetLikeDocument | undefined {
+    if (app.document) return app.document;
+    if (app.object) return app.object;
+    const optionsDoc = app.options && Reflect.get(app.options, "document");
+    return optionsDoc instanceof Object ? (optionsDoc as SheetLikeDocument) : undefined;
+  }
+
+  private static getDescriptionValueFromSystem(document?: SheetLikeDocument): string | undefined {
+    const system = document?.system;
+    if (!system || typeof system !== "object") return undefined;
+
+    const description = Reflect.get(system, "description");
+    if (!description || typeof description !== "object") return undefined;
+
+    const value = Reflect.get(description, "value");
+    return typeof value === "string" ? value : undefined;
   }
 }
