@@ -1,12 +1,20 @@
 import { SheetLikeApp, SupportedSystems } from "../types";
 import { TranslateAllSettingHandler } from "./settings-handler";
 
+type PlayState = "disabled" | "idle" | "loading" | "playing" | "paused";
+type GenState = "idle" | "loading" | "regenerate";
+
+interface FilePickerLike {
+  browse(source: string, target: string, options?: object): Promise<{ files?: string[] }>;
+  createDirectory(source: string, target: string, options?: object): Promise<unknown>;
+  upload(source: string, path: string, file: File, body?: object, options?: object): Promise<unknown>;
+}
+
 export class TTSHandler {
   private static currentAudio: HTMLAudioElement | null = null;
-  private static currentObjectUrl: string | null = null;
   private static currentButton: HTMLButtonElement | null = null;
 
-  static attachReadAloudButtons(app: SheetLikeApp, html: JQuery<HTMLElement> | HTMLElement): void {
+  static async attachReadAloudButtons(app: SheetLikeApp, html: JQuery<HTMLElement> | HTMLElement): Promise<void> {
     const system = TranslateAllSettingHandler.getSetting("translate-all", "targetSystem");
     if (system !== SupportedSystems.PATHFINDER2E) return;
 
@@ -16,87 +24,186 @@ export class TTSHandler {
     const root = TTSHandler.resolveRootElement(app, html);
     if (!root) return;
 
-    const paragraphs = root.querySelectorAll<HTMLElement>("p.read-aloud");
-    paragraphs.forEach((p) => TTSHandler.injectButton(p));
-  }
-
-  private static injectButton(paragraph: HTMLElement): void {
-    if (paragraph.querySelector("button.translate-all-tts-btn")) return;
+    const paragraphs = Array.from(root.querySelectorAll<HTMLElement>("p.read-aloud"));
+    if (paragraphs.length === 0) return;
 
     TTSHandler.ensureStyles();
 
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "translate-all-tts-btn";
-    btn.title = "Read aloud (TTS)";
-    btn.setAttribute("aria-label", "Read aloud");
-    btn.innerHTML = '<i class="fas fa-volume-up"></i>';
+    const folder = TTSHandler.getFolderPath();
+    const existing = await TTSHandler.listExistingFiles(folder);
 
-    btn.addEventListener("click", async (ev) => {
+    const voice = TranslateAllSettingHandler.getSetting("translate-all", "ttsVoice");
+    const model = TranslateAllSettingHandler.getSetting("translate-all", "ttsModel");
+    const instructions = TranslateAllSettingHandler.getSetting("translate-all", "ttsInstructions") ?? "";
+
+    for (const p of paragraphs) {
+      if (p.querySelector(".translate-all-tts-wrapper")) continue;
+      const text = TTSHandler.extractText(p);
+      if (!text) continue;
+      const filename = `${await TTSHandler.computeHash(text, voice, model, instructions)}.mp3`;
+      const url = existing.has(filename) ? TTSHandler.buildFileUrl(folder, filename) : null;
+      TTSHandler.injectButtons(p, filename, url);
+    }
+  }
+
+  private static injectButtons(paragraph: HTMLElement, filename: string, fileUrl: string | null): void {
+    const wrapper = document.createElement("span");
+    wrapper.className = "translate-all-tts-wrapper";
+
+    const genBtn = document.createElement("button");
+    genBtn.type = "button";
+    genBtn.className = "translate-all-tts-btn translate-all-tts-gen-btn";
+    TTSHandler.setGenButtonState(genBtn, fileUrl ? "regenerate" : "idle");
+
+    const playBtn = document.createElement("button");
+    playBtn.type = "button";
+    playBtn.className = "translate-all-tts-btn translate-all-tts-play-btn";
+    if (fileUrl) playBtn.dataset.audioSrc = fileUrl;
+    TTSHandler.setPlayButtonState(playBtn, fileUrl ? "idle" : "disabled");
+
+    genBtn.addEventListener("click", async (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
-
-      const state = btn.dataset.state ?? "idle";
-
-      if (state === "loading") {
-        TTSHandler.stopCurrent();
-        TTSHandler.setButtonState(btn, "idle");
-        return;
-      }
-
-      if (state === "playing" && TTSHandler.currentAudio && TTSHandler.currentButton === btn) {
-        TTSHandler.currentAudio.pause();
-        TTSHandler.setButtonState(btn, "paused");
-        return;
-      }
-
-      if (state === "paused" && TTSHandler.currentAudio && TTSHandler.currentButton === btn) {
-        try {
-          await TTSHandler.currentAudio.play();
-          TTSHandler.setButtonState(btn, "playing");
-        } catch (error) {
-          ui?.notifications?.error(`TTS playback failed. ${error}`);
-          TTSHandler.setButtonState(btn, "idle");
-        }
-        return;
-      }
-
-      const text = TTSHandler.extractText(paragraph);
-      if (!text) {
-        ui?.notifications?.warn("No text found to read aloud.");
-        return;
-      }
-
-      TTSHandler.stopCurrent();
-      TTSHandler.setButtonState(btn, "loading");
-      try {
-        const audio = await TTSHandler.synthesize(text);
-        if (!audio) {
-          TTSHandler.setButtonState(btn, "idle");
-          return;
-        }
-
-        TTSHandler.currentButton = btn;
-        audio.addEventListener("ended", () => TTSHandler.setButtonState(btn, "idle"));
-        audio.addEventListener("error", () => TTSHandler.setButtonState(btn, "idle"));
-        TTSHandler.setButtonState(btn, "playing");
-        await audio.play();
-      } catch (error) {
-        ui?.notifications?.error(`TTS playback failed. ${error}`);
-        TTSHandler.setButtonState(btn, "idle");
-      }
+      await TTSHandler.handleGenerate(paragraph, filename, genBtn, playBtn);
     });
 
-    paragraph.appendChild(btn);
+    playBtn.addEventListener("click", async (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      await TTSHandler.handlePlay(playBtn);
+    });
+
+    wrapper.appendChild(genBtn);
+    wrapper.appendChild(playBtn);
+    paragraph.appendChild(wrapper);
+  }
+
+  private static async handleGenerate(
+    paragraph: HTMLElement,
+    filename: string,
+    genBtn: HTMLButtonElement,
+    playBtn: HTMLButtonElement,
+  ): Promise<void> {
+    if (genBtn.dataset.state === "loading") return;
+
+    const text = TTSHandler.extractText(paragraph);
+    if (!text) {
+      ui?.notifications?.warn("No text found to read aloud.");
+      return;
+    }
+
+    const fp = TTSHandler.getFilePicker();
+    if (!fp) {
+      ui?.notifications?.error("Foundry FilePicker is not available.");
+      return;
+    }
+
+    const previousState: GenState = playBtn.dataset.audioSrc ? "regenerate" : "idle";
+    TTSHandler.setGenButtonState(genBtn, "loading");
+
+    try {
+      const blob = await TTSHandler.synthesizeBlob(text);
+      if (!blob) {
+        TTSHandler.setGenButtonState(genBtn, previousState);
+        return;
+      }
+
+      const folder = TTSHandler.getFolderPath();
+      await TTSHandler.ensureFolder(folder);
+
+      const file = new File([blob], filename, { type: blob.type || "audio/mpeg" });
+      await fp.upload("data", folder, file, {}, { notify: false });
+
+      const url = TTSHandler.buildFileUrl(folder, filename);
+      playBtn.dataset.audioSrc = url;
+      if (playBtn.dataset.state === "disabled") {
+        TTSHandler.setPlayButtonState(playBtn, "idle");
+      }
+      TTSHandler.setGenButtonState(genBtn, "regenerate");
+      ui?.notifications?.info(`TTS audio saved: ${folder}/${filename}`);
+    } catch (error) {
+      ui?.notifications?.error(`TTS generation failed. ${error}`);
+      TTSHandler.setGenButtonState(genBtn, previousState);
+    }
+  }
+
+  private static async handlePlay(playBtn: HTMLButtonElement): Promise<void> {
+    const state = (playBtn.dataset.state ?? "disabled") as PlayState;
+    if (state === "disabled" || state === "loading") return;
+
+    const src = playBtn.dataset.audioSrc;
+    if (!src) return;
+
+    if (state === "playing" && TTSHandler.currentAudio && TTSHandler.currentButton === playBtn) {
+      TTSHandler.currentAudio.pause();
+      TTSHandler.setPlayButtonState(playBtn, "paused");
+      return;
+    }
+
+    if (state === "paused" && TTSHandler.currentAudio && TTSHandler.currentButton === playBtn) {
+      try {
+        await TTSHandler.currentAudio.play();
+        TTSHandler.setPlayButtonState(playBtn, "playing");
+      } catch (error) {
+        ui?.notifications?.error(`TTS playback failed. ${error}`);
+        TTSHandler.setPlayButtonState(playBtn, "idle");
+      }
+      return;
+    }
+
+    TTSHandler.stopCurrent();
+
+    const audio = new Audio(src);
+    TTSHandler.currentAudio = audio;
+    TTSHandler.currentButton = playBtn;
+
+    audio.addEventListener("ended", () => {
+      TTSHandler.setPlayButtonState(playBtn, "idle");
+      TTSHandler.cleanup(audio);
+    });
+    audio.addEventListener("error", () => {
+      ui?.notifications?.error("Failed to load TTS audio file.");
+      TTSHandler.setPlayButtonState(playBtn, "idle");
+      TTSHandler.cleanup(audio);
+    });
+
+    TTSHandler.setPlayButtonState(playBtn, "playing");
+    try {
+      await audio.play();
+    } catch (error) {
+      ui?.notifications?.error(`TTS playback failed. ${error}`);
+      TTSHandler.setPlayButtonState(playBtn, "idle");
+      TTSHandler.cleanup(audio);
+    }
+  }
+
+  private static stopCurrent(): void {
+    if (!TTSHandler.currentAudio) return;
+    try {
+      TTSHandler.currentAudio.pause();
+      TTSHandler.currentAudio.currentTime = 0;
+    } catch {
+      /* ignore */
+    }
+    if (TTSHandler.currentButton && TTSHandler.currentButton.dataset.state !== "disabled") {
+      TTSHandler.setPlayButtonState(TTSHandler.currentButton, "idle");
+    }
+    TTSHandler.cleanup(TTSHandler.currentAudio);
+  }
+
+  private static cleanup(audio: HTMLAudioElement): void {
+    if (TTSHandler.currentAudio !== audio) return;
+    TTSHandler.currentAudio = null;
+    TTSHandler.currentButton = null;
   }
 
   private static extractText(paragraph: HTMLElement): string {
     const clone = paragraph.cloneNode(true) as HTMLElement;
-    clone.querySelectorAll("button.translate-all-tts-btn").forEach((b) => b.remove());
+    clone.querySelectorAll(".translate-all-tts-wrapper").forEach((b) => b.remove());
     return (clone.textContent ?? "").replace(/\s+/g, " ").trim();
   }
 
-  private static async synthesize(text: string): Promise<HTMLAudioElement | null> {
+  private static async synthesizeBlob(text: string): Promise<Blob | null> {
     const ttsEndpoint = TranslateAllSettingHandler.getSetting("translate-all", "ttsApiEndpoint");
     const ttsKey = TranslateAllSettingHandler.getSetting("translate-all", "ttsApiKey");
     const apiEndpoint = ttsEndpoint?.trim() || TranslateAllSettingHandler.getSetting("translate-all", "apiEndpoint");
@@ -139,50 +246,99 @@ export class TTSHandler {
       return null;
     }
 
-    const blob = await response.blob();
-    TTSHandler.stopCurrent();
-
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    TTSHandler.currentAudio = audio;
-    TTSHandler.currentObjectUrl = url;
-
-    audio.addEventListener("ended", () => TTSHandler.cleanup(audio));
-    audio.addEventListener("error", () => TTSHandler.cleanup(audio));
-
-    return audio;
+    return await response.blob();
   }
 
-  private static stopCurrent(): void {
-    if (!TTSHandler.currentAudio) return;
+  private static getFolderPath(): string {
+    const raw = TranslateAllSettingHandler.getSetting("translate-all", "ttsFolderPath");
+    const trimmed = (raw ?? "").trim().replace(/^\/+|\/+$/g, "");
+    return trimmed || "translateAll/textToSpeech";
+  }
+
+  private static buildFileUrl(folder: string, filename: string): string {
+    const path = `${folder}/${filename}`;
+    const route = (globalThis as { foundry?: { utils?: { getRoute?: (p: string) => string } } }).foundry?.utils
+      ?.getRoute;
+    return route ? route(path) : `/${path}`;
+  }
+
+  private static getFilePicker(): FilePickerLike | undefined {
+    const g = globalThis as {
+      FilePicker?: FilePickerLike;
+      foundry?: { applications?: { apps?: { FilePicker?: { implementation?: FilePickerLike } } } };
+    };
+    return g.FilePicker ?? g.foundry?.applications?.apps?.FilePicker?.implementation;
+  }
+
+  private static async ensureFolder(folder: string): Promise<void> {
+    const fp = TTSHandler.getFilePicker();
+    if (!fp) throw new Error("FilePicker is not available.");
+
     try {
-      TTSHandler.currentAudio.pause();
-      TTSHandler.currentAudio.currentTime = 0;
+      await fp.browse("data", folder);
+      return;
     } catch {
-      /* ignore */
+      /* fallthrough — folder probably doesn't exist */
     }
-    if (TTSHandler.currentButton) {
-      TTSHandler.setButtonState(TTSHandler.currentButton, "idle");
+
+    const parts = folder.split("/").filter(Boolean);
+    let current = "";
+    for (const part of parts) {
+      current = current ? `${current}/${part}` : part;
+      try {
+        await fp.createDirectory("data", current, {});
+      } catch {
+        /* already exists or no permission — let upload surface the real error */
+      }
     }
-    TTSHandler.cleanup(TTSHandler.currentAudio);
   }
 
-  private static cleanup(audio: HTMLAudioElement): void {
-    if (TTSHandler.currentAudio !== audio) return;
-    if (TTSHandler.currentObjectUrl) {
-      URL.revokeObjectURL(TTSHandler.currentObjectUrl);
-      TTSHandler.currentObjectUrl = null;
+  private static async listExistingFiles(folder: string): Promise<Set<string>> {
+    const fp = TTSHandler.getFilePicker();
+    if (!fp) return new Set();
+    try {
+      const result = await fp.browse("data", folder);
+      const files = result?.files ?? [];
+      return new Set(files.map((f) => decodeURIComponent(f.split("/").pop() ?? "")));
+    } catch {
+      return new Set();
     }
-    TTSHandler.currentAudio = null;
-    TTSHandler.currentButton = null;
   }
 
-  private static setButtonState(btn: HTMLButtonElement, state: "idle" | "loading" | "playing" | "paused"): void {
+  private static async computeHash(...parts: string[]): Promise<string> {
+    const input = parts.join("\u0001");
+    const data = new TextEncoder().encode(input);
+    const buf = await crypto.subtle.digest("SHA-256", data);
+    return Array.from(new Uint8Array(buf))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("")
+      .slice(0, 16);
+  }
+
+  private static setGenButtonState(btn: HTMLButtonElement, state: GenState): void {
     btn.dataset.state = state;
-    btn.disabled = false;
+    btn.disabled = state === "loading";
     if (state === "loading") {
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-      btn.title = "Loading… click to cancel";
+      btn.title = "Generating audio…";
+    } else if (state === "regenerate") {
+      btn.innerHTML = '<i class="fas fa-redo"></i>';
+      btn.title = "Regenerate audio";
+      btn.setAttribute("aria-label", "Regenerate TTS audio");
+    } else {
+      btn.innerHTML = '<i class="fas fa-download"></i>';
+      btn.title = "Generate audio file";
+      btn.setAttribute("aria-label", "Generate TTS audio");
+    }
+  }
+
+  private static setPlayButtonState(btn: HTMLButtonElement, state: PlayState): void {
+    btn.dataset.state = state;
+    btn.disabled = state === "disabled";
+    if (state === "disabled") {
+      btn.innerHTML = '<i class="fas fa-volume-up"></i>';
+      btn.title = "No audio yet — generate it first";
+      btn.setAttribute("aria-label", "Play TTS (unavailable)");
     } else if (state === "playing") {
       btn.innerHTML = '<i class="fas fa-pause"></i>';
       btn.title = "Pause playback";
@@ -191,7 +347,8 @@ export class TTSHandler {
       btn.title = "Resume playback";
     } else {
       btn.innerHTML = '<i class="fas fa-volume-up"></i>';
-      btn.title = "Read aloud (TTS)";
+      btn.title = "Play TTS audio";
+      btn.setAttribute("aria-label", "Play TTS audio");
     }
   }
 
@@ -213,23 +370,31 @@ export class TTSHandler {
     const style = document.createElement("style");
     style.id = "translate-all-tts-style";
     style.textContent = `
+      .translate-all-tts-wrapper {
+        display: inline-flex;
+        gap: 4px;
+        margin-left: 6px;
+        vertical-align: middle;
+      }
       button.translate-all-tts-btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         width: 22px;
         height: 22px;
-        margin-left: 6px;
         padding: 0;
         border: 1px solid var(--color-border-light-tertiary, #999);
         border-radius: 4px;
         background: rgba(0,0,0,0.05);
         cursor: pointer;
-        vertical-align: middle;
         line-height: 1;
       }
-      button.translate-all-tts-btn:hover {
+      button.translate-all-tts-btn:hover:not(:disabled) {
         background: rgba(0,0,0,0.12);
+      }
+      button.translate-all-tts-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
       }
       button.translate-all-tts-btn i {
         font-size: 11px;

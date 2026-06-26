@@ -22,5 +22,7 @@
   "translate-all.settings.tts.voice.name": "TTS Voice",
   "translate-all.settings.tts.voice.hint": "Voice preset used by the TTS model.",
   "translate-all.settings.tts.instructions.name": "TTS Voice Instructions",
-  "translate-all.settings.tts.instructions.hint": "Free-form style/tone instructions sent to the TTS model (e.g., 'narrate dramatically, slow pacing, ominous tone'). Only used by steerable models such as gpt-4o-mini-tts; ignored by tts-1/tts-1-hd. Leave empty to disable."
+  "translate-all.settings.tts.instructions.hint": "Free-form style/tone instructions sent to the TTS model (e.g., 'narrate dramatically, slow pacing, ominous tone'). Only used by steerable models such as gpt-4o-mini-tts; ignored by tts-1/tts-1-hd. Leave empty to disable.",
+  "translate-all.settings.tts.folderPath.name": "TTS Audio Folder",
+  "translate-all.settings.tts.folderPath.hint": "Path inside the Foundry Data folder where generated audio files are saved (e.g., translateAll/textToSpeech). Files are named by a hash of text+voice+model+instructions so identical passages reuse the same audio."
 }

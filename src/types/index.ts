@@ -14,6 +14,7 @@ declare global {
     'translate-all.ttsModel': string;
     'translate-all.ttsVoice': string;
     'translate-all.ttsInstructions': string;
+    'translate-all.ttsFolderPath': string;
   }
 
   namespace ClientSettings {

@@ -127,6 +127,14 @@ export class TranslateAllSettingHandler {
       default:
         "Speak as a dramatic tabletop RPG narrator reading a boxed read-aloud passage: measured pacing, vivid tone, slight tension, and clear diction.",
     },
+    ttsFolderPath: {
+      name: "translate-all.settings.tts.folderPath.name",
+      hint: "translate-all.settings.tts.folderPath.hint",
+      scope: "world",
+      config: true,
+      type: String,
+      default: "translateAll/textToSpeech",
+    },
   } as const satisfies Record<string, ClientSettings.RegisterOptions<ClientSettings.Type>>;
 
   async init(): Promise<void> {
@@ -151,6 +159,7 @@ export class TranslateAllSettingHandler {
     gameSettings.register("translate-all", "ttsModel", this.settings.ttsModel);
     gameSettings.register("translate-all", "ttsVoice", this.settings.ttsVoice);
     gameSettings.register("translate-all", "ttsInstructions", this.settings.ttsInstructions);
+    gameSettings.register("translate-all", "ttsFolderPath", this.settings.ttsFolderPath);
   }
 
   static getSetting<K extends ClientSettings.KeyFor<"translate-all">>(
