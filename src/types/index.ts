@@ -8,6 +8,12 @@ declare global {
     'translate-all.targetLanguage': SupportedLanguages;
     'translate-all.targetModel': string;
     'translate-all.promptTemplatePath': string;
+    'translate-all.ttsEnabled': boolean;
+    'translate-all.ttsApiEndpoint': string;
+    'translate-all.ttsApiKey': string;
+    'translate-all.ttsModel': string;
+    'translate-all.ttsVoice': string;
+    'translate-all.ttsInstructions': string;
   }
 
   namespace ClientSettings {

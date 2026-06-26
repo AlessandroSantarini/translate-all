@@ -1,6 +1,7 @@
 import { DataHandler } from "handlers/data-handler";
 import { HTMLHandler } from "handlers/html-handler";
 import { TranslateAllSettingHandler } from "handlers/settings-handler";
+import { TTSHandler } from "handlers/tts-handler";
 import { SheetLikeApp, SupportedEntries } from "types";
 
 interface AppWithDocumentName {
@@ -37,14 +38,17 @@ Hooks.once("init", async () => {
 
 Hooks.on("renderItemSheet", async (app: ItemSheet, html: JQuery<HTMLElement>) => {
   DataHandler.getTranslatedDescription(app, html, SupportedEntries.ITEM, HTMLHandler.translateApp);
+  TTSHandler.attachReadAloudButtons(app, html);
 });
 
 Hooks.on("renderItemSheet5e", async (app: ItemSheet, html: JQuery<HTMLElement>) => {
   DataHandler.getTranslatedDescription(app, html, SupportedEntries.ITEM, HTMLHandler.translateApp);
+  TTSHandler.attachReadAloudButtons(app, html);
 });
 
 Hooks.on("renderJournalEntryPageSheet", async (app: JournalPageSheet, html: JQuery<HTMLElement>) => {
   DataHandler.getTranslatedDescription(app, html, SupportedEntries.JOURNAL, HTMLHandler.translateApp);
+  TTSHandler.attachReadAloudButtons(app, html);
 });
 
 Hooks.on("renderApplicationV2", async (app: unknown, html: HTMLElement) => {
@@ -53,10 +57,12 @@ Hooks.on("renderApplicationV2", async (app: unknown, html: HTMLElement) => {
 
   if (documentName === "Item") {
     DataHandler.getTranslatedDescription(app, html, SupportedEntries.ITEM, HTMLHandler.translateApp);
+    TTSHandler.attachReadAloudButtons(app, html);
     return;
   }
 
   if (documentName === "JournalEntryPage") {
     DataHandler.getTranslatedDescription(app, html, SupportedEntries.JOURNAL, HTMLHandler.translateApp);
+    TTSHandler.attachReadAloudButtons(app, html);
   }
 });
