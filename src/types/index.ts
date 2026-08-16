@@ -29,7 +29,6 @@ export interface SheetLikeDocument {
   text?: { content?: string };
   system?: unknown;
   update?: (data: Record<string, string>) => unknown;
-  updateSource?: (data: Record<string, string>) => unknown;
   render?(force?: boolean): void;
   sheet?: { close?(...args: unknown[]): unknown } | null;
 }
