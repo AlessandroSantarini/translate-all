@@ -59,13 +59,39 @@ export class Translator {
             ${description}.`;
   }
 
-  static async getModels(): Promise<Record<string, string> | undefined> {
-    let response;
-    const apiKey = TranslateAllSettingHandler.getSetting("translate-all", "apiKey");
+  // Base URL of the OpenAI-compatible endpoint, without trailing slashes so
+  // it can be safely concatenated with API routes.
+  static getApiBaseUrl(): string {
     const apiEndpoint = TranslateAllSettingHandler.getSetting("translate-all", "apiEndpoint");
+    return (apiEndpoint ?? "").trim().replace(/\/+$/, "");
+  }
 
+  private static reportConnectionError(baseUrl: string, error: unknown): void {
+    ui?.notifications?.error(
+      `Could not reach API endpoint ${baseUrl}. Check the URL, that the server is running, and that it is reachable from this browser. ${error}`,
+    );
+  }
+
+  private static reportHttpError(response: Response, baseUrl: string): void {
+    if (response.status === 401 || response.status === 403) {
+      ui?.notifications?.error(`API key rejected by the endpoint (HTTP ${response.status}).`);
+      return;
+    }
+    ui?.notifications?.error(`API call to ${baseUrl} failed (HTTP ${response.status} ${response.statusText}).`);
+  }
+
+  static async getModels(): Promise<Record<string, string> | undefined> {
+    const apiKey = TranslateAllSettingHandler.getSetting("translate-all", "apiKey");
+    if (!apiKey) {
+      // Nothing configured yet: skip the request instead of raising an error
+      // toast on every world load of a freshly installed module.
+      return undefined;
+    }
+    const baseUrl = Translator.getApiBaseUrl();
+
+    let response;
     try {
-      response = await fetch(`${apiEndpoint}/models`, {
+      response = await fetch(`${baseUrl}/models`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -73,15 +99,21 @@ export class Translator {
         },
       });
     } catch (error) {
-      ui?.notifications?.error(`ChatGPT API call failed. ${error}`);
-    }
-
-    if (!response?.ok) {
-      ui?.notifications?.error("ChatGPT API call failed.");
+      Translator.reportConnectionError(baseUrl, error);
       return undefined;
     }
 
-    const data = await response.json();
+    if (!response.ok) {
+      Translator.reportHttpError(response, baseUrl);
+      return undefined;
+    }
+
+    const data = await response.json().catch(() => undefined);
+    if (!data || !Array.isArray(data.data)) {
+      ui?.notifications?.error(`API endpoint ${baseUrl} returned an unexpected response for /models.`);
+      return undefined;
+    }
+
     const models = data.data.reduce((acc: Record<string, string>, model: { id: string }) => {
       acc[model.id] = model.id;
       return acc;
@@ -90,16 +122,16 @@ export class Translator {
   }
 
   static async translateWithChatGPT(description: string): Promise<string | undefined> {
-    let response;
     const apiKey = TranslateAllSettingHandler.getSetting("translate-all", "apiKey");
-    const apiEndpoint = TranslateAllSettingHandler.getSetting("translate-all", "apiEndpoint");
+    const baseUrl = Translator.getApiBaseUrl();
     const system = TranslateAllSettingHandler.getSetting("translate-all", "targetSystem");
     const language = TranslateAllSettingHandler.getSetting("translate-all", "targetLanguage");
     const model = TranslateAllSettingHandler.getSetting("translate-all", "targetModel");
     const prompt = await Translator.generatePrompt(system, language, description);
 
+    let response;
     try {
-      response = await fetch(`${apiEndpoint}/chat/completions`, {
+      response = await fetch(`${baseUrl}/chat/completions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -111,15 +143,21 @@ export class Translator {
         }),
       });
     } catch (error) {
-      ui?.notifications?.error(`ChatGPT API call failed. ${error}`);
-    }
-
-    if (!response?.ok) {
-      ui?.notifications?.error("ChatGPT API call failed.");
+      Translator.reportConnectionError(baseUrl, error);
       return undefined;
     }
 
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content ?? undefined;
+    if (!response.ok) {
+      Translator.reportHttpError(response, baseUrl);
+      return undefined;
+    }
+
+    const data = await response.json().catch(() => undefined);
+    const content = data?.choices?.[0]?.message?.content;
+    if (typeof content !== "string" || !content) {
+      ui?.notifications?.error(`API endpoint ${baseUrl} returned an unexpected response for /chat/completions.`);
+      return undefined;
+    }
+    return content;
   }
 }
