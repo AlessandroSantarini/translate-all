@@ -7,6 +7,7 @@ declare global {
     'translate-all.apiKey': string;
     'translate-all.apiEndpoint': string;
     'translate-all.targetLanguage': SupportedLanguages;
+    'translate-all.outputMode': OutputModes;
     'translate-all.targetModel': string;
     'translate-all.customPrompt': string;
     'translate-all.promptTemplatePath': string;
@@ -67,6 +68,13 @@ export enum SupportedLanguages {
 export enum SupportedEntries {
   JOURNAL = 'journal',
   ITEM = 'item',
+}
+
+export enum OutputModes {
+  REPLACE = 'replace',
+  DUPLICATE = 'duplicate',
+  APPEND = 'append',
+  PREPEND = 'prepend',
 }
 
 export const Directories = {
