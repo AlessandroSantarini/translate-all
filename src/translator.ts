@@ -1,7 +1,5 @@
 import { TranslateAllSettingHandler } from "handlers/settings-handler";
-import { SupportedLanguages, SupportedSystems } from "types";
-
-const MAX_CUSTOM_PROMPT_LENGTH = 10000;
+import { MAX_CUSTOM_PROMPT_LENGTH, SupportedLanguages, SupportedSystems } from "types";
 
 export class Translator {
   static async translate(description: string): Promise<string | undefined> {

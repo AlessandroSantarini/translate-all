@@ -1,5 +1,5 @@
 import { Translator } from "../translator";
-import { SupportedLanguages, SupportedSystems } from "../types";
+import { MAX_CUSTOM_PROMPT_LENGTH, SupportedLanguages, SupportedSystems } from "../types";
 
 export class TranslateAllSettingHandler {
   readonly settings = {
@@ -176,5 +176,35 @@ export class TranslateAllSettingHandler {
     key: K,
   ): ClientSettings.SettingInitializedType<"translate-all", K> {
     return game.settings!.get(namespace, key);
+  }
+
+  // Replaces the single-line text input of the customPrompt setting with a
+  // multiline textarea. The textarea keeps the input's name so the settings
+  // form submits it unchanged.
+  static enhanceCustomPromptField(html: unknown): void {
+    const root = TranslateAllSettingHandler.resolveRootElement(html);
+    if (!root) return;
+
+    const input = root.querySelector<HTMLInputElement>('input[name="translate-all.customPrompt"]');
+    if (!input) return;
+
+    const textarea = document.createElement("textarea");
+    textarea.name = input.name;
+    textarea.value = input.value;
+    textarea.rows = 5;
+    textarea.maxLength = MAX_CUSTOM_PROMPT_LENGTH;
+    textarea.className = input.className;
+    input.replaceWith(textarea);
+  }
+
+  private static resolveRootElement(html: unknown): HTMLElement | null {
+    if (html instanceof HTMLElement) return html;
+    if (TranslateAllSettingHandler.hasHTMLElementAtZeroIndex(html)) return html[0];
+    return null;
+  }
+
+  private static hasHTMLElementAtZeroIndex(value: unknown): value is { 0: HTMLElement } {
+    if (!value || typeof value !== "object") return false;
+    return Reflect.get(value, 0) instanceof HTMLElement;
   }
 }
