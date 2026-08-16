@@ -80,14 +80,19 @@ export class Translator {
     ui?.notifications?.error(`API call to ${baseUrl} failed (HTTP ${response.status} ${response.statusText}).`);
   }
 
-  static async getModels(): Promise<Record<string, string> | undefined> {
-    const apiKey = TranslateAllSettingHandler.getSetting("translate-all", "apiKey");
+  // Credentials default to the saved settings, but can be supplied by the
+  // caller so the settings form can query an endpoint before saving it.
+  static async getModels(credentials?: {
+    apiKey?: string;
+    baseUrl?: string;
+  }): Promise<Record<string, string> | undefined> {
+    const apiKey = credentials?.apiKey ?? TranslateAllSettingHandler.getSetting("translate-all", "apiKey");
     if (!apiKey) {
       // Nothing configured yet: skip the request instead of raising an error
       // toast on every world load of a freshly installed module.
       return undefined;
     }
-    const baseUrl = Translator.getApiBaseUrl();
+    const baseUrl = credentials?.baseUrl?.trim().replace(/\/+$/, "") || Translator.getApiBaseUrl();
 
     let response;
     try {
