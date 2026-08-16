@@ -124,11 +124,9 @@ export class HTMLHandler {
     const item = app.object ?? app.document;
 
     try {
-      if (path.includes("system")) {
-        await item?.update?.({ [path]: translation });
-      } else {
-        await item?.updateSource?.({ [path]: translation });
-      }
+      // update() persists through the server. updateSource() only mutated the
+      // in-memory document, so journal translations were lost on reload.
+      await item?.update?.({ [path]: translation });
     } catch (error) {
       ui?.notifications?.error(`Error updating item description: ${error}`);
     }
