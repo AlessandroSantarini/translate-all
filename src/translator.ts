@@ -1,6 +1,8 @@
 import { TranslateAllSettingHandler } from "handlers/settings-handler";
 import { SupportedLanguages, SupportedSystems } from "types";
 
+const MAX_CUSTOM_PROMPT_LENGTH = 10000;
+
 export class Translator {
   static async translate(description: string): Promise<string | undefined> {
     return await Translator.translateWithChatGPT(description);
@@ -21,23 +23,41 @@ export class Translator {
     return promptTemplate;
   }
 
+  static getCustomPrompt(): string {
+    const customPrompt = TranslateAllSettingHandler.getSetting("translate-all", "customPrompt")?.trim();
+    if (!customPrompt) {
+      return "";
+    }
+    if (customPrompt.length > MAX_CUSTOM_PROMPT_LENGTH) {
+      ui?.notifications?.warn(`Custom prompt ignored: it exceeds ${MAX_CUSTOM_PROMPT_LENGTH} characters.`);
+      return "";
+    }
+    return customPrompt;
+  }
+
   static async generatePrompt(
     system: SupportedSystems,
     language: SupportedLanguages,
     description: string,
   ): Promise<string> {
-    const path = TranslateAllSettingHandler.getSetting("translate-all", "promptTemplatePath");
-    let prompt = "";
-    if (path) {
-      prompt = `${await Translator.getPromptTemplate(path)}: ${description}`;
-    } else {
-      prompt = `Translate the following ${system} item/spell description into ${language}:\n\n
-            Keep the same format and structure, like HTML tags, and do not translate the item name or any specific game terms. 
-            Do not add any additional code encapsulation or formatting. Just return the translated text.\n\n
-            ${description}.`;
+    // Precedence: inline custom prompt > prompt template file > default prompt
+    let prompt = Translator.getCustomPrompt();
+
+    if (!prompt) {
+      const path = TranslateAllSettingHandler.getSetting("translate-all", "promptTemplatePath");
+      if (path) {
+        prompt = (await Translator.getPromptTemplate(path)).trim();
+      }
     }
 
-    return prompt;
+    if (prompt) {
+      return `${prompt}: ${description}`;
+    }
+
+    return `Translate the following ${system} item/spell description into ${language}:\n\n
+            Keep the same format and structure, like HTML tags, and do not translate the item name or any specific game terms.
+            Do not add any additional code encapsulation or formatting. Just return the translated text.\n\n
+            ${description}.`;
   }
 
   static async getModels(): Promise<Record<string, string> | undefined> {

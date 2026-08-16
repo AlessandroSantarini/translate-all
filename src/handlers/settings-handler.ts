@@ -50,6 +50,14 @@ export class TranslateAllSettingHandler {
       default: "gpt-4o-mini",
       choices: {} as Record<string, string>,
     },
+    customPrompt: {
+      name: "translate-all.settings.customPrompt.name",
+      hint: "translate-all.settings.customPrompt.hint",
+      scope: "world",
+      config: true,
+      type: String,
+      default: "",
+    },
     promptTemplatePath: {
       name: "translate-all.settings.promptTemplatePath.name",
       hint: "translate-all.settings.promptTemplatePath.hint",
@@ -151,6 +159,7 @@ export class TranslateAllSettingHandler {
       choices: models ?? this.settings.targetModel.choices,
     };
     gameSettings.register("translate-all", "targetModel", targetModelConfig);
+    gameSettings.register("translate-all", "customPrompt", this.settings.customPrompt);
     gameSettings.register("translate-all", "promptTemplatePath", this.settings.promptTemplatePath);
 
     gameSettings.register("translate-all", "ttsEnabled", this.settings.ttsEnabled);
