@@ -6,22 +6,19 @@ export class Translator {
     return await Translator.translateWithChatGPT(description);
   }
 
-  static async getPromptTemplate(path: string, description: string): Promise<string> {
-    const promptTemplatePath = TranslateAllSettingHandler.getSetting("translate-all", "promptTemplatePath");
-    if (!promptTemplatePath) {
+  static async getPromptTemplate(path: string): Promise<string> {
+    if (!path) {
       return "";
     }
     let promptTemplate = "";
-    if (promptTemplatePath) {
-      try {
-        const url = foundry.utils.getRoute(promptTemplatePath);
-        promptTemplate = await fetch(url).then((x) => x.text());
-      } catch (err) {
-        ui?.notifications?.warn(`Could not load prompt template. ${err}`);
-      }
+    try {
+      const url = foundry.utils.getRoute(path);
+      promptTemplate = await fetch(url).then((x) => x.text());
+    } catch (err) {
+      ui?.notifications?.warn(`Could not load prompt template. ${err}`);
     }
 
-    return promptTemplate + `: ${description}`;
+    return promptTemplate;
   }
 
   static async generatePrompt(
@@ -32,7 +29,7 @@ export class Translator {
     const path = TranslateAllSettingHandler.getSetting("translate-all", "promptTemplatePath");
     let prompt = "";
     if (path) {
-      prompt = await Translator.getPromptTemplate(path, description);
+      prompt = `${await Translator.getPromptTemplate(path)}: ${description}`;
     } else {
       prompt = `Translate the following ${system} item/spell description into ${language}:\n\n
             Keep the same format and structure, like HTML tags, and do not translate the item name or any specific game terms. 
