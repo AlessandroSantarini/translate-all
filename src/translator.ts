@@ -138,6 +138,20 @@ export class Translator {
     return models;
   }
 
+  // Identifies a request by everything that can change its outcome: the final
+  // prompt (which already folds in the description, language, system and any
+  // custom template), the model, and the endpoint it was answered by. A change
+  // to any of them yields a different key, so a stale entry is never served.
+  private static async computeCacheKey(prompt: string, model: string, baseUrl: string): Promise<string> {
+    const input = [prompt, model, Translator.normalizeBaseUrl(baseUrl)].join("\u0001");
+    const data = new TextEncoder().encode(input);
+    const buf = await crypto.subtle.digest("SHA-256", data);
+    return Array.from(new Uint8Array(buf))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("")
+      .slice(0, 16);
+  }
+
   static async translateWithChatGPT(description: string): Promise<string | undefined> {
     const apiKey = TranslateAllSettingHandler.getSetting("translate-all", "apiKey");
     if (!apiKey) {
@@ -153,6 +167,16 @@ export class Translator {
     const language = TranslateAllSettingHandler.getSetting("translate-all", "targetLanguage");
     const model = TranslateAllSettingHandler.getSetting("translate-all", "targetModel");
     const prompt = await Translator.generatePrompt(system, language, description);
+
+    const cacheKey = TranslateAllSettingHandler.isCacheEnabled()
+      ? await Translator.computeCacheKey(prompt, model, baseUrl)
+      : undefined;
+    if (cacheKey) {
+      const cached = TranslateAllSettingHandler.getCachedTranslation(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    }
 
     let response;
     try {
@@ -182,6 +206,11 @@ export class Translator {
     if (typeof content !== "string" || !content) {
       ui?.notifications?.error(`API endpoint ${baseUrl} returned an unexpected response for /chat/completions.`);
       return undefined;
+    }
+
+    // Only successful, non-empty completions are worth remembering.
+    if (cacheKey) {
+      await TranslateAllSettingHandler.storeCachedTranslation(cacheKey, content);
     }
     return content;
   }
