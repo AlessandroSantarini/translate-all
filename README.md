@@ -26,6 +26,20 @@ into your specified language.
 
 ---
 
+## Custom API Endpoints (OpenAI-compatible)
+
+The **API Endpoint** setting lets you point the module at any OpenAI-compatible backend (Ollama, LM Studio, OpenRouter, a corporate proxy). The default is `https://api.openai.com/v1`.
+
+Things to know before using a custom endpoint:
+
+- **Requests are made from the browser**, not from the Foundry server. Whoever clicks Translate must be able to reach the endpoint from their machine.
+- **Mixed content**: if your Foundry instance is served over `https://`, browsers will block requests to an `http://` endpoint. Serve the endpoint over HTTPS or put it behind a reverse proxy.
+- **API key visibility**: the key is sent from the browser of whoever triggers a translation, so treat it as visible to your players.
+- The model dropdown is populated by querying `<endpoint>/models` when the world loads. After changing the endpoint or the key, reload the world to refresh the list.
+- Custom endpoints are not guaranteed to work: compatibility with third-party backends is the user's responsibility.
+
+---
+
 ## How It Works
 
 A new **"Translate"** button will appear where translation is supported:  
