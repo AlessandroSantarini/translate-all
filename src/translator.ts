@@ -36,7 +36,7 @@ export class Translator {
     } else {
       prompt = `Translate the following ${system} item/spell description into ${language}:\n\n
             Keep the same format and structure, like HTML tags, and do not translate the item name or any specific game terms. 
-            Don not add any additional code encapsulation or formatting. Just return the translated text.\n\n
+            Do not add any additional code encapsulation or formatting. Just return the translated text.\n\n
             ${description}.`;
     }
 
