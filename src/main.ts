@@ -38,6 +38,7 @@ Hooks.once("init", async () => {
 
 Hooks.on("renderSettingsConfig", (_app: unknown, html: unknown) => {
   TranslateAllSettingHandler.enhanceCustomPromptField(html);
+  TranslateAllSettingHandler.maskSecretFields(html);
 });
 
 // On ready rather than init: game.user is not available yet during init.

@@ -24,7 +24,6 @@ export class TranslateAllSettingHandler {
       config: true,
       type: String,
       default: "",
-      masked: true,
     },
     apiEndpoint: {
       name: "translate-all.settings.apiEndpoint.name",
@@ -41,7 +40,6 @@ export class TranslateAllSettingHandler {
       config: true,
       type: String,
       default: SupportedLanguages.ITALIAN,
-      masked: true,
     },
     outputMode: {
       name: "translate-all.settings.outputMode.name",
@@ -124,7 +122,6 @@ export class TranslateAllSettingHandler {
       config: true,
       type: String,
       default: "",
-      masked: true,
     },
     ttsModel: {
       name: "translate-all.settings.tts.model.name",
@@ -251,6 +248,20 @@ export class TranslateAllSettingHandler {
     const minimumRole = Number(TranslateAllSettingHandler.getSetting("translate-all", "minimumRole"));
     if (!Number.isFinite(minimumRole)) return game.user?.isGM === true;
     return (game.user?.role ?? 0) >= minimumRole;
+  }
+
+  // The settings form renders every String setting as a plain text input, so
+  // the key sat there in the open for anyone looking at the GM's screen. The
+  // `masked` flag the settings carried was never a Foundry option and had no
+  // effect at all.
+  static maskSecretFields(html: unknown): void {
+    const root = TranslateAllSettingHandler.resolveRootElement(html);
+    if (!root) return;
+
+    for (const key of ["apiKey", "ttsApiKey"]) {
+      const input = root.querySelector<HTMLInputElement>(`input[name="translate-all.${key}"]`);
+      if (input) input.type = "password";
+    }
   }
 
   // Keys stored before they became client scoped are still sitting in the

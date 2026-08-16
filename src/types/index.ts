@@ -23,7 +23,6 @@ declare global {
 
   namespace ClientSettings {
     interface RegisterOptions<T extends Type> {
-      masked?: boolean;
       filePicker?: boolean;
     }
   }
