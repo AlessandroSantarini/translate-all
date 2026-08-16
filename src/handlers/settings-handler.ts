@@ -15,10 +15,12 @@ export class TranslateAllSettingHandler {
         [SupportedSystems.PATHFINDER2E]: "Pathfinder 2e",
       },
     },
+    // Client scope: Foundry delivers world settings to every connected
+    // client, which would hand the key to the players.
     apiKey: {
       name: "translate-all.settings.apiKey.name",
       hint: "translate-all.settings.apiKey.hint",
-      scope: "world",
+      scope: "client",
       config: true,
       type: String,
       default: "",
@@ -118,7 +120,7 @@ export class TranslateAllSettingHandler {
     ttsApiKey: {
       name: "translate-all.settings.tts.apiKey.name",
       hint: "translate-all.settings.tts.apiKey.hint",
-      scope: "world",
+      scope: "client",
       config: true,
       type: String,
       default: "",
@@ -249,5 +251,42 @@ export class TranslateAllSettingHandler {
     const minimumRole = Number(TranslateAllSettingHandler.getSetting("translate-all", "minimumRole"));
     if (!Number.isFinite(minimumRole)) return game.user?.isGM === true;
     return (game.user?.role ?? 0) >= minimumRole;
+  }
+
+  // Keys stored before they became client scoped are still sitting in the
+  // world database, readable by every client. Move them into this browser and
+  // delete the world copy. Runs once, on ready, and only for a GM.
+  static async migrateApiKeysToClient(): Promise<void> {
+    if (!game.user?.isGM) return;
+
+    for (const key of ["apiKey", "ttsApiKey"] as const) {
+      const legacy = TranslateAllSettingHandler.findWorldSetting(`translate-all.${key}`);
+      const value = legacy && Reflect.get(legacy, "value");
+      if (typeof value !== "string" || !value) continue;
+
+      if (!TranslateAllSettingHandler.getSetting("translate-all", key)) {
+        await game.settings!.set("translate-all", key, value);
+      }
+
+      const remove = Reflect.get(legacy, "delete");
+      if (typeof remove === "function") {
+        await remove.call(legacy);
+      }
+      ui?.notifications?.info(
+        `Translate All: moved the ${key === "apiKey" ? "API key" : "TTS API key"} into this browser and removed it from the world, where players could read it.`,
+      );
+    }
+  }
+
+  private static findWorldSetting(fullKey: string): object | undefined {
+    const storage = Reflect.get(game.settings ?? {}, "storage");
+    const world = storage && typeof Reflect.get(storage, "get") === "function" ? storage.get("world") : undefined;
+    if (!world) return undefined;
+
+    const find = Reflect.get(world, "find");
+    if (typeof find !== "function") return undefined;
+
+    const found = find.call(world, (setting: unknown) => Reflect.get(setting ?? {}, "key") === fullKey);
+    return found && typeof found === "object" ? (found as object) : undefined;
   }
 }

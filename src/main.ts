@@ -40,6 +40,11 @@ Hooks.on("renderSettingsConfig", (_app: unknown, html: unknown) => {
   TranslateAllSettingHandler.enhanceCustomPromptField(html);
 });
 
+// On ready rather than init: game.user is not available yet during init.
+Hooks.once("ready", async () => {
+  await TranslateAllSettingHandler.migrateApiKeysToClient();
+});
+
 Hooks.on("renderItemSheet", async (app: ItemSheet, html: JQuery<HTMLElement>) => {
   DataHandler.getTranslatedDescription(app, html, SupportedEntries.ITEM, HTMLHandler.translateApp);
   TTSHandler.attachReadAloudButtons(app, html);
