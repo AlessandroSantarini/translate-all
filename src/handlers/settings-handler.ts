@@ -233,6 +233,75 @@ export class TranslateAllSettingHandler {
     input.replaceWith(textarea);
   }
 
+  // The model dropdown choices are frozen when the setting is registered, so
+  // without this the only way to pick up a new model list is reloading the
+  // world. The button queries the endpoint on demand and repopulates the
+  // select in place.
+  static enhanceModelField(html: unknown): void {
+    const root = TranslateAllSettingHandler.resolveRootElement(html);
+    if (!root) return;
+
+    const select = root.querySelector<HTMLSelectElement>('select[name="translate-all.targetModel"]');
+    if (!select || select.parentElement?.querySelector("button.translate-all-refresh-models")) return;
+
+    const button = document.createElement("button");
+    // Not a submit button: it must not save and close the settings form.
+    button.type = "button";
+    button.className = "translate-all-refresh-models";
+    button.style.marginLeft = "4px";
+    button.style.flex = "0 0 auto";
+    button.innerHTML = '<i class="fas fa-rotate"></i>';
+    button.title = game.i18n?.localize("translate-all.settings.model.refresh") ?? "Refresh model list";
+
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      const previousIcon = button.innerHTML;
+      button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+      try {
+        // Read the credentials currently typed in the form, so the endpoint
+        // can be tested without saving it first.
+        const models = await Translator.getModels({
+          apiKey: TranslateAllSettingHandler.readFieldValue(root, "translate-all.apiKey"),
+          baseUrl: TranslateAllSettingHandler.readFieldValue(root, "translate-all.apiEndpoint"),
+        });
+
+        // getModels already reported the specific reason on failure.
+        if (!models) return;
+
+        TranslateAllSettingHandler.repopulateChoices(select, models);
+        ui?.notifications?.info(`Loaded ${Object.keys(models).length} models.`);
+      } finally {
+        button.disabled = false;
+        button.innerHTML = previousIcon;
+      }
+    });
+
+    select.after(button);
+  }
+
+  private static readFieldValue(root: HTMLElement, name: string): string | undefined {
+    const field = root.querySelector<HTMLInputElement>(`[name="${name}"]`);
+    return field?.value?.trim() || undefined;
+  }
+
+  private static repopulateChoices(select: HTMLSelectElement, choices: Record<string, string>): void {
+    const previous = select.value;
+    select.replaceChildren();
+
+    for (const [value, label] of Object.entries(choices)) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = label;
+      select.append(option);
+    }
+
+    // Keep the current selection when the endpoint still offers it.
+    if (previous && Object.hasOwn(choices, previous)) {
+      select.value = previous;
+    }
+  }
+
   private static resolveRootElement(html: unknown): HTMLElement | null {
     if (html instanceof HTMLElement) return html;
     if (TranslateAllSettingHandler.hasHTMLElementAtZeroIndex(html)) return html[0];

@@ -13,6 +13,7 @@
   "translate-all.settings.game.system.hint": "Choose the game system for which you want to translate descriptions.",
   "translate-all.settings.model.name": "Target Model",
   "translate-all.settings.model.hint": "The model to use for translation. Default is 'GPT-4o Mini'.",
+  "translate-all.settings.model.refresh": "Reload the model list from the API endpoint using the key and endpoint currently entered above.",
   "translate-all.settings.customPrompt.name": "Custom Prompt",
   "translate-all.settings.customPrompt.hint": "Custom translation prompt written directly here. If not empty, it takes precedence over the Prompt Template File. The item description is appended after a colon (': <description>'). Leave both empty to use the default prompt.",
   "translate-all.settings.promptTemplatePath.name": "Prompt Template File",

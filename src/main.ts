@@ -38,6 +38,7 @@ Hooks.once("init", async () => {
 
 Hooks.on("renderSettingsConfig", (_app: unknown, html: unknown) => {
   TranslateAllSettingHandler.enhanceCustomPromptField(html);
+  TranslateAllSettingHandler.enhanceModelField(html);
 });
 
 Hooks.on("renderItemSheet", async (app: ItemSheet, html: JQuery<HTMLElement>) => {
