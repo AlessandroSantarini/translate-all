@@ -63,14 +63,14 @@ export class TranslateAllSettingHandler {
       // Stored as a string because Foundry setting choices are string keyed;
       // compared numerically against CONST.USER_ROLES in canUserTranslate.
       type: String,
-      // CONST.USER_ROLES.GAMEMASTER. Translating spends the configured API
-      // key, so the default keeps that in the hands of the GM.
-      default: "4",
+      // Translating spends the configured API key, so the default keeps that
+      // in the hands of the GM.
+      default: String(CONST.USER_ROLES.GAMEMASTER),
       choices: {
-        "1": "Player",
-        "2": "Trusted Player",
-        "3": "Assistant GM",
-        "4": "Game Master",
+        [String(CONST.USER_ROLES.PLAYER)]: "Player",
+        [String(CONST.USER_ROLES.TRUSTED)]: "Trusted Player",
+        [String(CONST.USER_ROLES.ASSISTANT)]: "Assistant GM",
+        [String(CONST.USER_ROLES.GAMEMASTER)]: "Game Master",
       },
     },
     targetModel: {
