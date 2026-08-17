@@ -1,3 +1,7 @@
+# 2.1.2
+- **Minimum Role to Translate** setting: choose the lowest user role (Player / Trusted Player / Assistant GM / Game Master) that sees the Translate button. Defaults to Game Master so the world API key stays in GM hands. Note: this is a UI-visibility gate rendered client-side, not a hard authorization boundary.
+- Fixed PF2E journal translations being lost on reload: the PF2E write path was calling `updateSource()` (in-memory only) for journal page paths, so translations were visible until the next reload and then dropped — with the API call already billed. Both items and journal pages now go through `update()`.
+
 # 2.1.1
 - **Inline Custom Prompt** setting: write your translation prompt directly in module settings as a resizable multi-line textarea (up to 10,000 characters). Takes precedence over the Prompt Template File; leave both empty to use the default prompt.
 - **Output Mode** setting: choose how translations are persisted for items, spells and journal pages:
