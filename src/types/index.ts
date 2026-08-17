@@ -33,7 +33,6 @@ export interface SheetLikeDocument {
   text?: { content?: string };
   system?: unknown;
   update?: (data: Record<string, string>) => unknown;
-  updateSource?: (data: Record<string, string>) => unknown;
   clone?: (data?: Record<string, unknown>, context?: Record<string, unknown>) => unknown;
   render?(force?: boolean): void;
   sheet?: { close?(...args: unknown[]): unknown } | null;
