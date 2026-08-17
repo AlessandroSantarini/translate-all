@@ -89,7 +89,13 @@ In module settings, scroll to the TTS section and:
 
 ## Options
 
-- If you would like to use the default prompt, leave the prompt file selection empty.
+- **Output Mode**: choose what happens with the translated text:
+  - **Replace the original text** (default): overwrites the description in place, as before.
+  - **Create a translated copy**: leaves the original untouched and creates a copy with the target language appended to its name (items are created in the same folder, journal pages inside the same journal entry).
+  - **Append / Prepend translation**: keeps both texts in the same description, separated by a horizontal rule.
+- **Custom Prompt**: write your translation prompt directly in module settings. When not empty, it takes precedence over the prompt template file. Useful for iterating on translation style without leaving Foundry.
+- **Prompt Template File**: select a text file containing your prompt. Used only when the custom prompt is empty.
+- If you would like to use the default prompt, leave both the custom prompt and the prompt file selection empty.
 
 ---
 

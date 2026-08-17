@@ -2,7 +2,7 @@
   "id": "translate-all",
   "title": "Translate All",
   "description": "Adds a button to translate item/spell and Journal descriptions using ChatGPT. Experimental: text-to-speech for PF2E read-aloud paragraphs.",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "type": "module",
   "compatibility": {
     "minimum": "13",

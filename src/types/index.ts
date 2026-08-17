@@ -1,4 +1,5 @@
 export const MODULE_NAME = 'translate-all';
+export const MAX_CUSTOM_PROMPT_LENGTH = 10000;
 
 declare global {
   interface SettingConfig {
@@ -6,7 +7,9 @@ declare global {
     'translate-all.apiKey': string;
     'translate-all.apiEndpoint': string;
     'translate-all.targetLanguage': SupportedLanguages;
+    'translate-all.outputMode': OutputModes;
     'translate-all.targetModel': string;
+    'translate-all.customPrompt': string;
     'translate-all.promptTemplatePath': string;
     'translate-all.ttsEnabled': boolean;
     'translate-all.ttsApiEndpoint': string;
@@ -26,9 +29,11 @@ declare global {
 }
 
 export interface SheetLikeDocument {
+  name?: string;
   text?: { content?: string };
   system?: unknown;
   update?: (data: Record<string, string>) => unknown;
+  clone?: (data?: Record<string, unknown>, context?: Record<string, unknown>) => unknown;
   render?(force?: boolean): void;
   sheet?: { close?(...args: unknown[]): unknown } | null;
 }
@@ -64,6 +69,13 @@ export enum SupportedLanguages {
 export enum SupportedEntries {
   JOURNAL = 'journal',
   ITEM = 'item',
+}
+
+export enum OutputModes {
+  REPLACE = 'replace',
+  DUPLICATE = 'duplicate',
+  APPEND = 'append',
+  PREPEND = 'prepend',
 }
 
 export const Directories = {

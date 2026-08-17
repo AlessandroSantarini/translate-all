@@ -1,5 +1,5 @@
 import { Translator } from "translator";
-import { SheetLikeApp, SupportedSystems } from "types";
+import { OutputModes, SheetLikeApp, SupportedSystems } from "types";
 import { TranslateAllSettingHandler } from "./settings-handler";
 
 export class HTMLHandler {
@@ -35,7 +35,8 @@ export class HTMLHandler {
           return;
         }
 
-        await HTMLHandler.updateDescription(app, translated, path);
+        const mode = TranslateAllSettingHandler.getSetting("translate-all", "outputMode");
+        await HTMLHandler.persistTranslation(app, mode, translated, description, path);
       } finally {
         HTMLHandler.setButtonLoadingState(btn, false);
       }
@@ -98,6 +99,58 @@ export class HTMLHandler {
     `;
 
     document.head.append(style);
+  }
+
+  // Single entry point for persisting a translation. Every output mode goes
+  // through here; only `replace` (and the append/prepend composites, which
+  // keep the original inside the same field) write to the source document.
+  private static async persistTranslation(
+    app: SheetLikeApp,
+    mode: OutputModes,
+    translation: string,
+    original: string,
+    path: string,
+  ): Promise<void> {
+    if (mode === OutputModes.DUPLICATE) {
+      await HTMLHandler.createTranslatedCopy(app, translation, path);
+      return;
+    }
+
+    await HTMLHandler.updateDescription(app, HTMLHandler.composeOutput(mode, original, translation), path);
+  }
+
+  private static composeOutput(mode: OutputModes, original: string, translation: string): string {
+    switch (mode) {
+      case OutputModes.APPEND:
+        return `${original}\n<hr />\n${translation}`;
+      case OutputModes.PREPEND:
+        return `${translation}\n<hr />\n${original}`;
+      default:
+        return translation;
+    }
+  }
+
+  private static async createTranslatedCopy(app: SheetLikeApp, translation: string, path: string): Promise<void> {
+    const document = app.document ?? app.object;
+    if (!document?.clone) {
+      ui?.notifications?.error("This document cannot be duplicated.");
+      return;
+    }
+
+    const language = TranslateAllSettingHandler.getSetting("translate-all", "targetLanguage");
+    const data: Record<string, unknown> = { [path]: translation };
+    if (typeof document.name === "string" && document.name) {
+      data.name = `${document.name} (${language})`;
+    }
+
+    try {
+      // clone with save creates a sibling document: same folder for world
+      // documents, same parent for embedded ones (e.g. journal pages).
+      await document.clone(data, { save: true });
+      ui?.notifications?.info("Created translated copy.");
+    } catch (error) {
+      ui?.notifications?.error(`Error creating translated copy: ${error}`);
+    }
   }
 
   private static async updateDescription(app: SheetLikeApp, translation: string, path: string): Promise<void> {
