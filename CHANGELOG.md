@@ -1,3 +1,11 @@
+# 2.1.1
+- **Inline Custom Prompt** setting: write your translation prompt directly in module settings as a resizable multi-line textarea (up to 10,000 characters). Takes precedence over the Prompt Template File; leave both empty to use the default prompt.
+- **Output Mode** setting: choose how translations are persisted for items, spells and journal pages:
+  - **Replace the original text** (default) — overwrites the description in place, as before.
+  - **Create a translated copy** — leaves the original untouched and clones the document with the target language appended to its name (same folder for world documents, same journal entry for pages).
+  - **Append / Prepend translation** — keeps both texts in the same description separated by a horizontal rule.
+- Fixed a typo in the default translation prompt.
+
 # 2.1.0
 - **Experimental:** Text-to-Speech for Pathfinder 2e read-aloud passages
   - Adds two buttons next to every `<p class="read-aloud">` paragraph (PF2E only)
