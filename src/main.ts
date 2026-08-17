@@ -36,6 +36,10 @@ Hooks.once("init", async () => {
   await settingHandler.init();
 });
 
+Hooks.on("renderSettingsConfig", (_app: unknown, html: unknown) => {
+  TranslateAllSettingHandler.enhanceCustomPromptField(html);
+});
+
 Hooks.on("renderItemSheet", async (app: ItemSheet, html: JQuery<HTMLElement>) => {
   DataHandler.getTranslatedDescription(app, html, SupportedEntries.ITEM, HTMLHandler.translateApp);
   TTSHandler.attachReadAloudButtons(app, html);

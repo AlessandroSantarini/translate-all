@@ -1,4 +1,5 @@
 export const MODULE_NAME = 'translate-all';
+export const MAX_CUSTOM_PROMPT_LENGTH = 10000;
 
 declare global {
   interface SettingConfig {
@@ -7,6 +8,7 @@ declare global {
     'translate-all.apiEndpoint': string;
     'translate-all.targetLanguage': SupportedLanguages;
     'translate-all.targetModel': string;
+    'translate-all.customPrompt': string;
     'translate-all.promptTemplatePath': string;
     'translate-all.ttsEnabled': boolean;
     'translate-all.ttsApiEndpoint': string;

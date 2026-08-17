@@ -1,5 +1,5 @@
 import { Translator } from "../translator";
-import { SupportedLanguages, SupportedSystems } from "../types";
+import { MAX_CUSTOM_PROMPT_LENGTH, SupportedLanguages, SupportedSystems } from "../types";
 
 export class TranslateAllSettingHandler {
   readonly settings = {
@@ -49,6 +49,14 @@ export class TranslateAllSettingHandler {
       type: String,
       default: "gpt-4o-mini",
       choices: {} as Record<string, string>,
+    },
+    customPrompt: {
+      name: "translate-all.settings.customPrompt.name",
+      hint: "translate-all.settings.customPrompt.hint",
+      scope: "world",
+      config: true,
+      type: String,
+      default: "",
     },
     promptTemplatePath: {
       name: "translate-all.settings.promptTemplatePath.name",
@@ -151,6 +159,7 @@ export class TranslateAllSettingHandler {
       choices: models ?? this.settings.targetModel.choices,
     };
     gameSettings.register("translate-all", "targetModel", targetModelConfig);
+    gameSettings.register("translate-all", "customPrompt", this.settings.customPrompt);
     gameSettings.register("translate-all", "promptTemplatePath", this.settings.promptTemplatePath);
 
     gameSettings.register("translate-all", "ttsEnabled", this.settings.ttsEnabled);
@@ -167,5 +176,37 @@ export class TranslateAllSettingHandler {
     key: K,
   ): ClientSettings.SettingInitializedType<"translate-all", K> {
     return game.settings!.get(namespace, key);
+  }
+
+  // Replaces the single-line text input of the customPrompt setting with a
+  // multiline textarea. The textarea keeps the input's name so the settings
+  // form submits it unchanged.
+  static enhanceCustomPromptField(html: unknown): void {
+    const root = TranslateAllSettingHandler.resolveRootElement(html);
+    if (!root) return;
+
+    const input = root.querySelector<HTMLInputElement>('input[name="translate-all.customPrompt"]');
+    if (!input) return;
+
+    const textarea = document.createElement("textarea");
+    textarea.name = input.name;
+    textarea.value = input.value;
+    textarea.rows = 5;
+    textarea.maxLength = MAX_CUSTOM_PROMPT_LENGTH;
+    textarea.className = input.className;
+    textarea.style.width = "100%";
+    textarea.style.resize = "vertical";
+    input.replaceWith(textarea);
+  }
+
+  private static resolveRootElement(html: unknown): HTMLElement | null {
+    if (html instanceof HTMLElement) return html;
+    if (TranslateAllSettingHandler.hasHTMLElementAtZeroIndex(html)) return html[0];
+    return null;
+  }
+
+  private static hasHTMLElementAtZeroIndex(value: unknown): value is { 0: HTMLElement } {
+    if (!value || typeof value !== "object") return false;
+    return Reflect.get(value, 0) instanceof HTMLElement;
   }
 }

@@ -89,7 +89,9 @@ In module settings, scroll to the TTS section and:
 
 ## Options
 
-- If you would like to use the default prompt, leave the prompt file selection empty.
+- **Custom Prompt**: write your translation prompt directly in module settings. When not empty, it takes precedence over the prompt template file. Useful for iterating on translation style without leaving Foundry.
+- **Prompt Template File**: select a text file containing your prompt. Used only when the custom prompt is empty.
+- If you would like to use the default prompt, leave both the custom prompt and the prompt file selection empty.
 
 ---
 

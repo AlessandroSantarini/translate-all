@@ -9,6 +9,8 @@
   "translate-all.settings.game.system.hint": "Choose the game system for which you want to translate descriptions.",
   "translate-all.settings.model.name": "Target Model",
   "translate-all.settings.model.hint": "The model to use for translation. Default is 'GPT-4o Mini'.",
+  "translate-all.settings.customPrompt.name": "Custom Prompt",
+  "translate-all.settings.customPrompt.hint": "Custom translation prompt written directly here. If not empty, it takes precedence over the Prompt Template File. The item description is appended after a colon (': <description>'). Leave both empty to use the default prompt.",
   "translate-all.settings.promptTemplatePath.name": "Prompt Template File",
   "translate-all.settings.promptTemplatePath.hint": "Path to a text file containing a custom prompt (e.g., /modules/translate-all/prompts/dnd5e.txt)",
   "translate-all.settings.tts.enabled.name": "Enable Read-Aloud TTS (experimental, PF2E only)",
