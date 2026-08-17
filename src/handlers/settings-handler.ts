@@ -194,6 +194,8 @@ export class TranslateAllSettingHandler {
     textarea.rows = 5;
     textarea.maxLength = MAX_CUSTOM_PROMPT_LENGTH;
     textarea.className = input.className;
+    textarea.style.width = "100%";
+    textarea.style.resize = "vertical";
     input.replaceWith(textarea);
   }
 
