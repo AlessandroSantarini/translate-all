@@ -7,6 +7,7 @@ declare global {
     'translate-all.apiKey': string;
     'translate-all.apiEndpoint': string;
     'translate-all.targetLanguage': SupportedLanguages;
+    'translate-all.outputMode': OutputModes;
     'translate-all.targetModel': string;
     'translate-all.customPrompt': string;
     'translate-all.promptTemplatePath': string;
@@ -28,10 +29,12 @@ declare global {
 }
 
 export interface SheetLikeDocument {
+  name?: string;
   text?: { content?: string };
   system?: unknown;
   update?: (data: Record<string, string>) => unknown;
   updateSource?: (data: Record<string, string>) => unknown;
+  clone?: (data?: Record<string, unknown>, context?: Record<string, unknown>) => unknown;
   render?(force?: boolean): void;
   sheet?: { close?(...args: unknown[]): unknown } | null;
 }
@@ -67,6 +70,13 @@ export enum SupportedLanguages {
 export enum SupportedEntries {
   JOURNAL = 'journal',
   ITEM = 'item',
+}
+
+export enum OutputModes {
+  REPLACE = 'replace',
+  DUPLICATE = 'duplicate',
+  APPEND = 'append',
+  PREPEND = 'prepend',
 }
 
 export const Directories = {

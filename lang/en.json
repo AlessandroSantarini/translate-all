@@ -5,6 +5,8 @@
   "translate-all.settings.apiEndpoint.hint": "The endpoint to use for the API. Change this if you are using a proxy or a different compatible API.",
   "translate-all.settings.language.name": "Language",
   "translate-all.settings.language.hint": "The language to translate descriptions into.",
+  "translate-all.settings.outputMode.name": "Output Mode",
+  "translate-all.settings.outputMode.hint": "What to do with the translation: replace the original text, create a translated copy of the document or page, or append/prepend the translation to the original text separated by a horizontal rule.",
   "translate-all.settings.game.system.name": "Select Game System",
   "translate-all.settings.game.system.hint": "Choose the game system for which you want to translate descriptions.",
   "translate-all.settings.model.name": "Target Model",

@@ -1,5 +1,5 @@
 import { Translator } from "../translator";
-import { MAX_CUSTOM_PROMPT_LENGTH, SupportedLanguages, SupportedSystems } from "../types";
+import { MAX_CUSTOM_PROMPT_LENGTH, OutputModes, SupportedLanguages, SupportedSystems } from "../types";
 
 export class TranslateAllSettingHandler {
   readonly settings = {
@@ -40,6 +40,20 @@ export class TranslateAllSettingHandler {
       type: String,
       default: SupportedLanguages.ITALIAN,
       masked: true,
+    },
+    outputMode: {
+      name: "translate-all.settings.outputMode.name",
+      hint: "translate-all.settings.outputMode.hint",
+      scope: "world",
+      config: true,
+      type: String,
+      default: OutputModes.REPLACE,
+      choices: {
+        [OutputModes.REPLACE]: "Replace the original text",
+        [OutputModes.DUPLICATE]: "Create a translated copy",
+        [OutputModes.APPEND]: "Append translation after the original",
+        [OutputModes.PREPEND]: "Prepend translation before the original",
+      },
     },
     targetModel: {
       name: "translate-all.settings.model.name",
@@ -152,6 +166,7 @@ export class TranslateAllSettingHandler {
     gameSettings.register("translate-all", "apiKey", this.settings.apiKey);
     gameSettings.register("translate-all", "apiEndpoint", this.settings.apiEndpoint);
     gameSettings.register("translate-all", "targetLanguage", this.settings.targetLanguage);
+    gameSettings.register("translate-all", "outputMode", this.settings.outputMode);
 
     const models = await Translator.getModels();
     const targetModelConfig = {
