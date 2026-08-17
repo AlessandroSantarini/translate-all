@@ -9,6 +9,10 @@ export class HTMLHandler {
     description: string,
     path: string,
   ): Promise<void> {
+    // Checked before anything is injected, so users below the configured role
+    // never see the button rather than seeing it fail.
+    if (!TranslateAllSettingHandler.canUserTranslate()) return;
+
     const root = HTMLHandler.resolveRootElement(app, html);
     if (!root) return;
 

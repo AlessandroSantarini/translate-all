@@ -89,6 +89,7 @@ In module settings, scroll to the TTS section and:
 
 ## Options
 
+- **Minimum Role to Translate** (Game Master by default) controls who sees the Translate button. Translating spends the API key configured for the world, so lowering this lets those users spend it too.
 - **Output Mode**: choose what happens with the translated text:
   - **Replace the original text** (default): overwrites the description in place, as before.
   - **Create a translated copy**: leaves the original untouched and creates a copy with the target language appended to its name (items are created in the same folder, journal pages inside the same journal entry).

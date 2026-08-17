@@ -8,6 +8,7 @@ declare global {
     'translate-all.apiEndpoint': string;
     'translate-all.targetLanguage': SupportedLanguages;
     'translate-all.outputMode': OutputModes;
+    'translate-all.minimumRole': string;
     'translate-all.targetModel': string;
     'translate-all.customPrompt': string;
     'translate-all.promptTemplatePath': string;

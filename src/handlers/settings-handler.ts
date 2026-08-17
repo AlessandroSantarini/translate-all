@@ -55,6 +55,24 @@ export class TranslateAllSettingHandler {
         [OutputModes.PREPEND]: "Prepend translation before the original",
       },
     },
+    minimumRole: {
+      name: "translate-all.settings.minimumRole.name",
+      hint: "translate-all.settings.minimumRole.hint",
+      scope: "world",
+      config: true,
+      // Stored as a string because Foundry setting choices are string keyed;
+      // compared numerically against CONST.USER_ROLES in canUserTranslate.
+      type: String,
+      // Translating spends the configured API key, so the default keeps that
+      // in the hands of the GM.
+      default: String(CONST.USER_ROLES.GAMEMASTER),
+      choices: {
+        [String(CONST.USER_ROLES.PLAYER)]: "Player",
+        [String(CONST.USER_ROLES.TRUSTED)]: "Trusted Player",
+        [String(CONST.USER_ROLES.ASSISTANT)]: "Assistant GM",
+        [String(CONST.USER_ROLES.GAMEMASTER)]: "Game Master",
+      },
+    },
     targetModel: {
       name: "translate-all.settings.model.name",
       hint: "translate-all.settings.model.hint",
@@ -167,6 +185,7 @@ export class TranslateAllSettingHandler {
     gameSettings.register("translate-all", "apiEndpoint", this.settings.apiEndpoint);
     gameSettings.register("translate-all", "targetLanguage", this.settings.targetLanguage);
     gameSettings.register("translate-all", "outputMode", this.settings.outputMode);
+    gameSettings.register("translate-all", "minimumRole", this.settings.minimumRole);
 
     const models = await Translator.getModels();
     const targetModelConfig = {
@@ -223,5 +242,12 @@ export class TranslateAllSettingHandler {
   private static hasHTMLElementAtZeroIndex(value: unknown): value is { 0: HTMLElement } {
     if (!value || typeof value !== "object") return false;
     return Reflect.get(value, 0) instanceof HTMLElement;
+  }
+
+  // Whether the current user is allowed to spend the configured API key.
+  static canUserTranslate(): boolean {
+    const minimumRole = Number(TranslateAllSettingHandler.getSetting("translate-all", "minimumRole"));
+    if (!Number.isFinite(minimumRole)) return game.user?.isGM === true;
+    return (game.user?.role ?? 0) >= minimumRole;
   }
 }
