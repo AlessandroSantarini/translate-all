@@ -97,6 +97,7 @@ In module settings, scroll to the TTS section and:
 - **Custom Prompt**: write your translation prompt directly in module settings. When not empty, it takes precedence over the prompt template file. Useful for iterating on translation style without leaving Foundry.
 - **Prompt Template File**: select a text file containing your prompt. Used only when the custom prompt is empty.
 - If you would like to use the default prompt, leave both the custom prompt and the prompt file selection empty.
+- The default prompt asks the model to keep the HTML structure, the game terms and the Foundry reference syntax (`@UUID`, `@Check`, `@Damage`, `&Reference`, inline rolls) untouched. A custom prompt or a prompt file replaces the default entirely, so repeat those instructions in your own prompt if you rely on them.
 
 ---
 
