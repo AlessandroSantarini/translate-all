@@ -59,11 +59,16 @@ export class Translator {
             ${description}.`;
   }
 
+  // Normalizes an OpenAI-compatible endpoint URL: trims whitespace and
+  // trailing slashes so it can be safely concatenated with API routes.
+  private static normalizeBaseUrl(url: string | undefined | null): string {
+    return (url ?? "").trim().replace(/\/+$/, "");
+  }
+
   // Base URL of the OpenAI-compatible endpoint, without trailing slashes so
   // it can be safely concatenated with API routes.
   static getApiBaseUrl(): string {
-    const apiEndpoint = TranslateAllSettingHandler.getSetting("translate-all", "apiEndpoint");
-    return (apiEndpoint ?? "").trim().replace(/\/+$/, "");
+    return Translator.normalizeBaseUrl(TranslateAllSettingHandler.getSetting("translate-all", "apiEndpoint"));
   }
 
   private static reportConnectionError(baseUrl: string, error: unknown): void {
@@ -92,7 +97,14 @@ export class Translator {
       // toast on every world load of a freshly installed module.
       return undefined;
     }
-    const baseUrl = credentials?.baseUrl?.trim().replace(/\/+$/, "") || Translator.getApiBaseUrl();
+    const baseUrl =
+      credentials?.baseUrl !== undefined
+        ? Translator.normalizeBaseUrl(credentials.baseUrl)
+        : Translator.getApiBaseUrl();
+    if (!baseUrl) {
+      ui?.notifications?.error("API endpoint is not configured. Set it in the module settings.");
+      return undefined;
+    }
 
     let response;
     try {
@@ -128,7 +140,15 @@ export class Translator {
 
   static async translateWithChatGPT(description: string): Promise<string | undefined> {
     const apiKey = TranslateAllSettingHandler.getSetting("translate-all", "apiKey");
+    if (!apiKey) {
+      ui?.notifications?.error("API key is not configured. Set it in the module settings.");
+      return undefined;
+    }
     const baseUrl = Translator.getApiBaseUrl();
+    if (!baseUrl) {
+      ui?.notifications?.error("API endpoint is not configured. Set it in the module settings.");
+      return undefined;
+    }
     const system = TranslateAllSettingHandler.getSetting("translate-all", "targetSystem");
     const language = TranslateAllSettingHandler.getSetting("translate-all", "targetLanguage");
     const model = TranslateAllSettingHandler.getSetting("translate-all", "targetModel");
