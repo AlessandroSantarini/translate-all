@@ -1,3 +1,12 @@
+# 2.1.3
+- **Client-scoped API keys**: the translation and TTS API keys are now stored per browser (client scope) instead of as a world setting, so they are no longer delivered to connected players. Each GM enters their own key, and a browser without the key cannot translate. Existing world-scoped keys are migrated to the current client on first load.
+- **Default prompt preserves Foundry reference syntax**: the built-in translation prompt now instructs the model to reproduce `@UUID`, `@Check`, `@Damage`, `@Template`, `&Reference` and inline rolls verbatim (only the visible label between curly braces may be translated), preventing broken links in translated descriptions.
+- **Custom API endpoint hardening**:
+  - Trailing slashes on the endpoint URL are stripped and normalization is centralized, so `https://host/v1/` and `https://host/v1` behave identically for both translation and model listing.
+  - Empty or missing endpoint / API key now produce clear toasts (`"API endpoint is not configured…"`, `"API key is not configured…"`) instead of failing later with a confusing URL error.
+  - `401` / `403` responses from the endpoint are reported as `"API key rejected by the endpoint"` rather than a generic HTTP error.
+  - New **refresh** button next to the **Target Model** dropdown re-queries `<endpoint>/models` using the values currently typed in the settings form, so you can reload the list after changing the endpoint or key without restarting the world.
+
 # 2.1.2
 - **Minimum Role to Translate** setting: choose the lowest user role (Player / Trusted Player / Assistant GM / Game Master) that sees the Translate button. Defaults to Game Master so the world API key stays in GM hands. Note: this is a UI-visibility gate rendered client-side, not a hard authorization boundary.
 - Fixed PF2E journal translations being lost on reload: the PF2E write path was calling `updateSource()` (in-memory only) for journal page paths, so translations were visible until the next reload and then dropped — with the API call already billed. Both items and journal pages now go through `update()`.
