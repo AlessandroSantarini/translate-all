@@ -54,6 +54,7 @@ export class Translator {
 
     return `Translate the following ${system} item/spell description into ${language}:\n\n
             Keep the same format and structure, like HTML tags, and do not translate the item name or any specific game terms.
+            Reproduce Foundry reference syntax exactly as written, brackets included: @UUID, @Check, @Damage, @Template, &Reference and inline rolls. Only the visible label between curly braces may be translated.
             Do not add any additional code encapsulation or formatting. Just return the translated text.\n\n
             ${description}.`;
   }
