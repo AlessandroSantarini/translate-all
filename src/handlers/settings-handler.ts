@@ -1,5 +1,12 @@
 import { Translator } from "../translator";
-import { MAX_CUSTOM_PROMPT_LENGTH, OutputModes, SupportedLanguages, SupportedSystems } from "../types";
+import {
+  MAX_CACHE_ENTRIES,
+  MAX_CUSTOM_PROMPT_LENGTH,
+  OutputModes,
+  SupportedLanguages,
+  SupportedSystems,
+  TranslationCache,
+} from "../types";
 
 export class TranslateAllSettingHandler {
   readonly settings = {
@@ -99,6 +106,22 @@ export class TranslateAllSettingHandler {
       filePicker: true,
       default: "",
     },
+    cacheEnabled: {
+      name: "translate-all.settings.cache.enabled.name",
+      hint: "translate-all.settings.cache.enabled.hint",
+      scope: "client",
+      config: true,
+      type: Boolean,
+      default: true,
+    },
+    // Backing store for the cache itself: client scope keeps it in this
+    // browser's localStorage instead of the world database.
+    translationCache: {
+      scope: "client",
+      config: false,
+      type: String,
+      default: "{}",
+    },
     ttsEnabled: {
       name: "translate-all.settings.tts.enabled.name",
       hint: "translate-all.settings.tts.enabled.hint",
@@ -194,6 +217,9 @@ export class TranslateAllSettingHandler {
     gameSettings.register("translate-all", "targetModel", targetModelConfig);
     gameSettings.register("translate-all", "customPrompt", this.settings.customPrompt);
     gameSettings.register("translate-all", "promptTemplatePath", this.settings.promptTemplatePath);
+
+    gameSettings.register("translate-all", "cacheEnabled", this.settings.cacheEnabled);
+    gameSettings.register("translate-all", "translationCache", this.settings.translationCache);
 
     gameSettings.register("translate-all", "ttsEnabled", this.settings.ttsEnabled);
     gameSettings.register("translate-all", "ttsApiEndpoint", this.settings.ttsApiEndpoint);
@@ -368,5 +394,119 @@ export class TranslateAllSettingHandler {
 
     const found = find.call(world, (setting: unknown) => Reflect.get(setting ?? {}, "key") === fullKey);
     return found && typeof found === "object" ? (found as object) : undefined;
+  }
+
+  static isCacheEnabled(): boolean {
+    return TranslateAllSettingHandler.getSetting("translate-all", "cacheEnabled") === true;
+  }
+
+  static getCachedTranslation(key: string): string | undefined {
+    const entry = TranslateAllSettingHandler.readCache()[key];
+    return entry ? entry.content : undefined;
+  }
+
+  static async storeCachedTranslation(key: string, content: string): Promise<void> {
+    if (!key || !content) {
+      return;
+    }
+    const cache = TranslateAllSettingHandler.readCache();
+    cache[key] = { content, at: Date.now() };
+    await TranslateAllSettingHandler.writeCache(TranslateAllSettingHandler.evictOldest(cache));
+  }
+
+  // Returns how many entries were dropped so the caller can report it.
+  static async clearTranslationCache(): Promise<number> {
+    const dropped = Object.keys(TranslateAllSettingHandler.readCache()).length;
+    await TranslateAllSettingHandler.writeCache({});
+    return dropped;
+  }
+
+  // Injects a Clear Cache button next to the cacheEnabled checkbox in the
+  // settings form. Uses text nodes so localized strings are never parsed as HTML.
+  static injectClearCacheButton(html: unknown): void {
+    const root = TranslateAllSettingHandler.resolveRootElement(html);
+    if (!root) return;
+
+    const checkbox = root.querySelector<HTMLInputElement>('input[name="translate-all.cacheEnabled"]');
+    const container = checkbox?.parentElement;
+    if (!container || container.querySelector("button.translate-all-clear-cache")) return;
+
+    const button = document.createElement("button");
+    // Never submit the settings form: this only touches client-side storage.
+    button.type = "button";
+    button.className = "translate-all-clear-cache";
+    button.title = game.i18n?.localize("translate-all.settings.cache.clear.hint") ?? "";
+
+    const icon = document.createElement("i");
+    icon.className = "fas fa-trash";
+    button.appendChild(icon);
+    button.appendChild(
+      document.createTextNode(` ${game.i18n?.localize("translate-all.settings.cache.clear.label") ?? "Clear Cache"}`),
+    );
+
+    button.addEventListener("click", async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const dropped = await TranslateAllSettingHandler.clearTranslationCache();
+      ui?.notifications?.info(`Translation cache cleared (${dropped} entries removed).`);
+    });
+
+    container.appendChild(button);
+  }
+
+  // Tolerates anything localStorage may hold: a corrupted or hand-edited value
+  // degrades to an empty cache instead of breaking translation.
+  private static readCache(): TranslationCache {
+    const raw = TranslateAllSettingHandler.getSetting("translate-all", "translationCache");
+    if (!raw) {
+      return {};
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return {};
+    }
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {};
+    }
+
+    const cache: TranslationCache = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      if (!value || typeof value !== "object") {
+        continue;
+      }
+      const content = Reflect.get(value, "content");
+      const at = Reflect.get(value, "at");
+      if (typeof content !== "string" || typeof at !== "number") {
+        continue;
+      }
+      cache[key] = { content, at };
+    }
+    return cache;
+  }
+
+  private static async writeCache(cache: TranslationCache): Promise<void> {
+    try {
+      await game.settings!.set("translate-all", "translationCache", JSON.stringify(cache));
+    } catch (error) {
+      // A full localStorage quota must never abort a successful translation.
+      ui?.notifications?.warn(`Could not persist the translation cache. ${error}`);
+    }
+  }
+
+  private static evictOldest(cache: TranslationCache): TranslationCache {
+    const keys = Object.keys(cache);
+    if (keys.length <= MAX_CACHE_ENTRIES) {
+      return cache;
+    }
+
+    const kept = keys.sort((a, b) => cache[b].at - cache[a].at).slice(0, MAX_CACHE_ENTRIES);
+    const trimmed: TranslationCache = {};
+    for (const key of kept) {
+      trimmed[key] = cache[key];
+    }
+    return trimmed;
   }
 }

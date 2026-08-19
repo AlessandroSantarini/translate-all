@@ -1,6 +1,10 @@
 export const MODULE_NAME = 'translate-all';
 export const MAX_CUSTOM_PROMPT_LENGTH = 10000;
 
+// Upper bound of translations kept in the client-side cache. Entries are
+// evicted oldest-first so localStorage cannot grow without limit.
+export const MAX_CACHE_ENTRIES = 300;
+
 declare global {
   interface SettingConfig {
     'translate-all.targetSystem': SupportedSystems;
@@ -12,6 +16,8 @@ declare global {
     'translate-all.targetModel': string;
     'translate-all.customPrompt': string;
     'translate-all.promptTemplatePath': string;
+    'translate-all.cacheEnabled': boolean;
+    'translate-all.translationCache': string;
     'translate-all.ttsEnabled': boolean;
     'translate-all.ttsApiEndpoint': string;
     'translate-all.ttsApiKey': string;
@@ -27,6 +33,13 @@ declare global {
     }
   }
 }
+
+export interface TranslationCacheEntry {
+  content: string;
+  at: number;
+}
+
+export type TranslationCache = Record<string, TranslationCacheEntry>;
 
 export interface SheetLikeDocument {
   name?: string;
