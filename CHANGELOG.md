@@ -1,3 +1,8 @@
+# 2.1.4
+- **Local translation cache**: successful translations are now cached in this browser and reused when the same text is translated again with the same prompt, model and endpoint, so the same content is not billed twice. Entries are keyed by a SHA-256 of prompt + model + endpoint, so changing any of them (language, system, custom prompt, target model, custom endpoint) produces a fresh entry rather than a stale hit. Storage is client-scoped, capped at 300 entries with oldest-first eviction, and never reaches the world database or other players.
+  - New **Cache Translations Locally** toggle (on by default) in module settings turns the cache off.
+  - New **Clear Cache** button next to the toggle discards every cached translation stored in this browser and reports how many were removed.
+
 # 2.1.3
 - **Client-scoped API keys**: the translation and TTS API keys are now stored per browser (client scope) instead of as a world setting, so they are no longer delivered to connected players. Each GM enters their own key, and a browser without the key cannot translate. Existing world-scoped keys are migrated to the current client on first load.
 - **Default prompt preserves Foundry reference syntax**: the built-in translation prompt now instructs the model to reproduce `@UUID`, `@Check`, `@Damage`, `@Template`, `&Reference` and inline rolls verbatim (only the visible label between curly braces may be translated), preventing broken links in translated descriptions.

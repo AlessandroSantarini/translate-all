@@ -1,6 +1,6 @@
 {
   "name": "translate-all",
-  "version": "2.1.3",
+  "version": "2.1.4",
   "description": "Foundry VTT module to translate item and spell descriptions using ChatGPT, and synthesize PF2E read-aloud text via OpenAI TTS.",
   "private": true,
   "type": "module",
