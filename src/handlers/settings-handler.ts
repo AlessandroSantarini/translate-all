@@ -521,7 +521,7 @@ export class TranslateAllSettingHandler {
     return dropped;
   }
 
-  // Injects a Clear Cache button next to the cacheEnabled checkbox in the
+  // Injects a Clear Translation Cache button next to the cacheEnabled checkbox in the
   // settings form. Uses text nodes so localized strings are never parsed as HTML.
   static injectClearCacheButton(html: unknown): void {
     const root = TranslateAllSettingHandler.resolveRootElement(html);
@@ -541,7 +541,9 @@ export class TranslateAllSettingHandler {
     icon.className = "fas fa-trash";
     button.appendChild(icon);
     button.appendChild(
-      document.createTextNode(` ${game.i18n?.localize("translate-all.settings.cache.clear.label") ?? "Clear Cache"}`),
+      document.createTextNode(
+        ` ${game.i18n?.localize("translate-all.settings.cache.clear.label") ?? "Clear Translation Cache"}`,
+      ),
     );
 
     button.addEventListener("click", async (event) => {
