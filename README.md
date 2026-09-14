@@ -18,7 +18,7 @@ into your specified language.
 1. Visit [https://platform.openai.com/](https://platform.openai.com/)
 2. Get your API key: [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)  
    - ⚠️ **Important:** The key will only be shown once. Copy it and store it somewhere safe.  
-   - Set a **spending limit**. I'm using `o4-mini`, which is very affordable. Still, set a budget — I'm not responsible for any charges.  
+   - Set a **spending limit**. A small model such as `gpt-5-mini` is very affordable. Still, set a budget — I'm not responsible for any charges.  
    - You'll get a free trial with some usage credits.  
    - Costs are generally low and depend on how many words you translate. Check [OpenAI pricing](https://openai.com/pricing).
 3. Enter the API key in the FoundryVTT module settings. The key is stored in your browser rather than in the world, so your players never receive it. Enter it again if you run Foundry from a different browser, and each GM uses their own.
