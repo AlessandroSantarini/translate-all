@@ -8,6 +8,10 @@ import {
   TranslationCache,
 } from "../types";
 
+// Ties the model input to its suggestion list; the settings form renders one
+// of each.
+const MODEL_SUGGESTIONS_ID = "translate-all-model-suggestions";
+
 export class TranslateAllSettingHandler {
   readonly settings = {
     targetSystem: {
@@ -258,16 +262,40 @@ export class TranslateAllSettingHandler {
     input.replaceWith(textarea);
   }
 
-  // The model dropdown choices are frozen when the setting is registered, so
-  // without this the only way to pick up a new model list is reloading the
-  // world. The button queries the endpoint on demand and repopulates the
-  // select in place.
+  // Foundry renders a String setting with choices as a dropdown, which leaves
+  // no way in when the endpoint does not answer /models: nothing to pick, and
+  // nothing to type. The field becomes a text input backed by a suggestion
+  // list, keeping the input name so the settings form submits it unchanged.
+  // The model list turns into a convenience rather than the only way to name
+  // a model, and an empty list can no longer overwrite what was stored.
   static enhanceModelField(html: unknown): void {
     const root = TranslateAllSettingHandler.resolveRootElement(html);
     if (!root) return;
 
     const select = root.querySelector<HTMLSelectElement>('select[name="translate-all.targetModel"]');
     if (!select || select.parentElement?.querySelector("button.translate-all-refresh-models")) return;
+
+    const suggestions = document.createElement("datalist");
+    suggestions.id = MODEL_SUGGESTIONS_ID;
+    TranslateAllSettingHandler.repopulateSuggestions(
+      suggestions,
+      Array.from(select.options, (option) => option.value),
+    );
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.name = select.name;
+    input.className = select.className;
+    // The stored setting rather than the select's value: with no options the
+    // select reports an empty string, which is what used to be saved back.
+    input.value = TranslateAllSettingHandler.getSetting("translate-all", "targetModel") ?? "";
+    input.setAttribute("list", suggestions.id);
+    // The suggestion list is the point; the browser's own history is noise.
+    input.autocomplete = "off";
+    input.placeholder = game.i18n?.localize("translate-all.settings.model.placeholder") ?? "";
+
+    select.replaceWith(input);
+    input.after(suggestions);
 
     const button = document.createElement("button");
     // Not a submit button: it must not save and close the settings form.
@@ -294,7 +322,7 @@ export class TranslateAllSettingHandler {
         // getModels already reported the specific reason on failure.
         if (!models) return;
 
-        TranslateAllSettingHandler.repopulateChoices(select, models);
+        TranslateAllSettingHandler.repopulateSuggestions(suggestions, Object.keys(models));
         ui?.notifications?.info(`Loaded ${Object.keys(models).length} models.`);
       } finally {
         button.disabled = false;
@@ -302,7 +330,7 @@ export class TranslateAllSettingHandler {
       }
     });
 
-    select.after(button);
+    input.after(button);
   }
 
   private static readFieldValue(root: HTMLElement, name: string): string | undefined {
@@ -310,28 +338,17 @@ export class TranslateAllSettingHandler {
     return field?.value?.trim() || undefined;
   }
 
-  private static repopulateChoices(select: HTMLSelectElement, choices: Record<string, string>): void {
-    const previous = select.value;
-    select.replaceChildren();
+  // Refreshing only replaces what the endpoint offers. Whatever is typed in
+  // the field is left alone, so a model the endpoint does not list is not
+  // silently swapped for one that it does.
+  private static repopulateSuggestions(suggestions: HTMLDataListElement, models: string[]): void {
+    suggestions.replaceChildren();
 
-    // Preserve the currently-saved model even if the endpoint no longer lists it,
-    // so submitting the form after a refresh cannot silently overwrite it with "".
-    if (previous && !Object.hasOwn(choices, previous)) {
+    for (const model of models) {
+      if (!model) continue;
       const option = document.createElement("option");
-      option.value = previous;
-      option.textContent = `${previous} (not listed by endpoint)`;
-      select.append(option);
-    }
-
-    for (const [value, label] of Object.entries(choices)) {
-      const option = document.createElement("option");
-      option.value = value;
-      option.textContent = label;
-      select.append(option);
-    }
-
-    if (previous) {
-      select.value = previous;
+      option.value = model;
+      suggestions.append(option);
     }
   }
 
