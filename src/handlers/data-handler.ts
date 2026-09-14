@@ -58,11 +58,10 @@ export class DataHandler {
     item: SupportedEntries,
     translateFN: TranslateFunction,
   ) {
-    const description = DataHandler.getDescription(app, item);
-    if (!description) {
-      // Do not enable button to translate if there is no description
-      return;
-    }
+    // An empty description no longer rules the button out on its own: the
+    // sheet may hold text in an editor that has not been saved yet. Deciding
+    // that needs the rendered sheet, so it is left to the translate function.
+    const description = DataHandler.getDescription(app, item) ?? "";
     const path = DataHandler.getPathToUpdate(item);
     translateFN(app, html, description, path);
   }

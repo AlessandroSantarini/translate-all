@@ -43,8 +43,10 @@ Things to know before using a custom endpoint:
 
 ## How It Works
 
-A new **"Translate"** button will appear where translation is supported:  
+A new **"Translate"** button will appear in the header of the sheet where the document is edited:  
 ![Before translation](./images/before_translation.png)
+
+For a journal page, open the page for editing first: the button is in the page editor, not in the page as you read it. Whatever the editor currently holds is what gets translated, including edits you have not saved yet.
 
 After clicking it, a spinner will appear. Wait for it to finish:  
 ![After translation](./images/during_translation.png)
@@ -91,14 +93,6 @@ In module settings, scroll to the TTS section and:
 6. Optionally change **TTS Audio Folder** if you prefer a different location inside `Data/`.
 
 > The **Generate** button requires GM permissions (Foundry blocks file uploads from players). Once the file exists on disk, any connected client can press Play.
-
----
-
-## Known Issues
-
-- On some occasions, an extra button may appear in the journal. Do not click it.
-
-![Known Issue](./images/know_issue.png)
 
 ---
 

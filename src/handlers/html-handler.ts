@@ -13,8 +13,17 @@ export class HTMLHandler {
     // never see the button rather than seeing it fail.
     if (!TranslateAllSettingHandler.canUserTranslate()) return;
 
+    // A journal page renders twice: read-only inside its entry, and again in
+    // the page editor. Only the editor is offered the button, so the control
+    // sits in the same place for every document type.
+    if (HTMLHandler.isReadOnlyView(app)) return;
+
     const root = HTMLHandler.resolveRootElement(app, html);
     if (!root) return;
+
+    // Nothing stored yet and no editor to read from means there is nothing to
+    // translate, so the button is not worth showing.
+    if (!description && !HTMLHandler.resolveEditorElement(root, path)) return;
 
     const header = HTMLHandler.resolveHeaderContainer(root);
     if (!header) return;
@@ -30,17 +39,37 @@ export class HTMLHandler {
     btn.addEventListener("click", async () => {
       if (btn.dataset.loading === "true") return;
 
+      // Read at click time rather than at injection time: the editor may have
+      // been opened, or its contents changed, since the button was added.
+      const editorValue = HTMLHandler.readEditorValue(root, path);
+      const source = editorValue ?? description;
+      if (!source) {
+        ui?.notifications?.warn("There is nothing to translate yet.");
+        return;
+      }
+
       HTMLHandler.setButtonLoadingState(btn, true);
 
       try {
-        const translated = await Translator.translate(description);
+        const translated = await Translator.translate(source);
         if (!translated) {
           ui?.notifications?.error("Translation failed or returned empty.");
           return;
         }
 
         const mode = TranslateAllSettingHandler.getSetting("translate-all", "outputMode");
-        await HTMLHandler.persistTranslation(app, mode, translated, description, path);
+
+        // In duplicate mode the copy takes the translation and the original
+        // keeps the source, but text read from an open editor is not stored
+        // anywhere yet. It gets the same implicit save the other modes give
+        // it by overwriting the field; without it, the source of the
+        // translation would exist in no document at all.
+        if (mode === OutputModes.DUPLICATE && editorValue !== undefined) {
+          const saved = await HTMLHandler.saveEditorSource(app, editorValue, path);
+          if (!saved) return;
+        }
+
+        await HTMLHandler.persistTranslation(app, mode, translated, source, path);
       } finally {
         HTMLHandler.setButtonLoadingState(btn, false);
       }
@@ -62,6 +91,40 @@ export class HTMLHandler {
   private static hasHTMLElementAtZeroIndex(value: unknown): value is { 0: HTMLElement } {
     if (!value || typeof value !== "object") return false;
     return Reflect.get(value, 0) instanceof HTMLElement;
+  }
+
+  // The form control the sheet uses to edit the field being translated, if the
+  // sheet exposes one. Foundry names it after the document path, so the same
+  // lookup covers a journal page editor and an item description editor.
+  private static resolveEditorElement(root: HTMLElement, path: string): Element | null {
+    return root.querySelector(`[name="${path}"]`);
+  }
+
+  // Text being edited is not yet text stored in the document, and the button
+  // now lives inside the editing view, so the editor wins over the document.
+  private static readEditorValue(root: HTMLElement, path: string): string | undefined {
+    const editor = HTMLHandler.resolveEditorElement(root, path);
+    if (!editor) return undefined;
+
+    const value = Reflect.get(editor, "value");
+    if (typeof value !== "string" || !value.trim()) return undefined;
+
+    return value;
+  }
+
+  // A sheet rendered for reading only: a journal page embedded in its entry is
+  // rendered in view mode, without a window frame, and an older page sheet is
+  // rendered as not editable.
+  private static isReadOnlyView(app: SheetLikeApp): boolean {
+    const options = app.options;
+    if (!options) return false;
+
+    if (Reflect.get(options, "mode") === "view") return true;
+    if (Reflect.get(options, "editable") === false) return true;
+
+    const windowOptions = Reflect.get(options, "window");
+    if (!windowOptions || typeof windowOptions !== "object") return false;
+    return Reflect.get(windowOptions, "frame") === false;
   }
 
   private static resolveHeaderContainer(root: HTMLElement): HTMLElement | null {
@@ -103,6 +166,20 @@ export class HTMLHandler {
     `;
 
     document.head.append(style);
+  }
+
+  // Writes the editor's text to the source document without closing the
+  // sheet. Returns false when the write fails, so the caller can stop before
+  // a step that assumes the source text is safely stored.
+  private static async saveEditorSource(app: SheetLikeApp, source: string, path: string): Promise<boolean> {
+    try {
+      const document = app.document ?? app.object;
+      await document?.update?.({ [path]: source });
+      return true;
+    } catch (error) {
+      ui?.notifications?.error(`Error saving the edited text before duplicating: ${error}`);
+      return false;
+    }
   }
 
   // Single entry point for persisting a translation. Every output mode goes
@@ -158,6 +235,11 @@ export class HTMLHandler {
   }
 
   private static async updateDescription(app: SheetLikeApp, translation: string, path: string): Promise<void> {
+    // The sheet is closed before the document is written, not after. Foundry
+    // saves an open editor while the sheet closes, and that save carries the
+    // pre-translation text, so writing first would put the original back.
+    await HTMLHandler.closeSheet(app);
+
     const system = TranslateAllSettingHandler.getSetting("translate-all", "targetSystem");
     if (system === SupportedSystems.DND5E) {
       await this.update5eDescription(app, translation, path);
@@ -166,12 +248,18 @@ export class HTMLHandler {
     }
   }
 
+  private static async closeSheet(app: SheetLikeApp): Promise<void> {
+    try {
+      await app.close();
+    } catch (error) {
+      ui?.notifications?.warn(`Could not close the sheet before saving the translation: ${error}`);
+    }
+  }
+
   private static async update5eDescription(app: SheetLikeApp, translation: string, path: string): Promise<void> {
     try {
       const item = app.document ?? app.object;
       await item?.update?.({ [path]: translation });
-      app.render(true);
-      app.close();
     } catch (error) {
       ui?.notifications?.error(`Error updating item description: ${error}`);
     }
@@ -187,8 +275,5 @@ export class HTMLHandler {
     } catch (error) {
       ui?.notifications?.error(`Error updating item description: ${error}`);
     }
-
-    item?.render?.(true);
-    await item?.sheet?.close?.();
   }
 }
