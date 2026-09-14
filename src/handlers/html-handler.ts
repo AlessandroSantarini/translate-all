@@ -30,11 +30,19 @@ export class HTMLHandler {
 
     if (header.querySelector("button.translate-btn")) return;
 
+    HTMLHandler.ensureButtonStyles();
+
+    const label = game.i18n?.localize("translate-all.button.translate.label") ?? "Translate";
+    const tooltip = game.i18n?.localize("translate-all.button.translate.tooltip") ?? label;
+
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "translate-btn";
-    btn.style.marginLeft = "8px";
-    btn.textContent = "Translate Description";
+    // header-control lets Foundry's own AppV2 header styling absorb the button.
+    btn.className = "translate-btn header-control";
+    btn.setAttribute("aria-label", label);
+    btn.setAttribute("data-tooltip", tooltip);
+    btn.title = tooltip;
+    btn.innerHTML = '<i class="fa-solid fa-language" aria-hidden="true"></i>';
 
     btn.addEventListener("click", async () => {
       if (btn.dataset.loading === "true") return;
@@ -75,6 +83,20 @@ export class HTMLHandler {
       }
     });
 
+    HTMLHandler.insertBeforeCloseControl(header, btn);
+  }
+
+  // Places the button to the left of Foundry's close control so it does not
+  // sit past the window's X. Falls back to appending when no close control is
+  // recognised (older AppV1 layouts).
+  private static insertBeforeCloseControl(header: HTMLElement, btn: HTMLButtonElement): void {
+    const close = header.querySelector<HTMLElement>(
+      '[data-action="close"], button.header-control.close, a.close, .header-button.close',
+    );
+    if (close && close.parentElement === header) {
+      header.insertBefore(btn, close);
+      return;
+    }
     header.append(btn);
   }
 
@@ -141,27 +163,59 @@ export class HTMLHandler {
     if (isLoading) {
       button.dataset.loading = "true";
       button.disabled = true;
-      button.innerHTML =
-        '<span style="display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-bottom-color:transparent;border-radius:50%;margin-right:6px;vertical-align:middle;animation:translate-all-spin 0.8s linear infinite;"></span>Translating...';
-
-      HTMLHandler.ensureSpinnerStyles();
+      const loading = game.i18n?.localize("translate-all.button.translate.loading") ?? "Translating…";
+      button.setAttribute("aria-label", loading);
+      button.setAttribute("data-tooltip", loading);
+      button.title = loading;
+      button.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>';
       return;
     }
 
+    const label = game.i18n?.localize("translate-all.button.translate.label") ?? "Translate";
+    const tooltip = game.i18n?.localize("translate-all.button.translate.tooltip") ?? label;
     button.dataset.loading = "false";
     button.disabled = false;
-    button.textContent = "Translate Description";
+    button.setAttribute("aria-label", label);
+    button.setAttribute("data-tooltip", tooltip);
+    button.title = tooltip;
+    button.innerHTML = '<i class="fa-solid fa-language" aria-hidden="true"></i>';
   }
 
-  private static ensureSpinnerStyles(): void {
-    if (document.getElementById("translate-all-spinner-style")) return;
+  private static ensureButtonStyles(): void {
+    if (document.getElementById("translate-all-button-style")) return;
 
     const style = document.createElement("style");
-    style.id = "translate-all-spinner-style";
+    style.id = "translate-all-button-style";
+    // Blends with AppV2 header controls without overriding Foundry's theme:
+    // transparent background, inherited color, subtle hover.
     style.textContent = `
-      @keyframes translate-all-spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
+      button.translate-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--header-control-size, 28px);
+        height: var(--header-control-size, 28px);
+        padding: 0;
+        margin-inline-start: 4px;
+        border: none;
+        background: transparent;
+        color: inherit;
+        border-radius: 4px;
+        cursor: pointer;
+        line-height: 1;
+        font-size: 14px;
+        opacity: 0.85;
+      }
+      button.translate-btn:hover:not(:disabled) {
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.08);
+      }
+      button.translate-btn:disabled {
+        opacity: 0.6;
+        cursor: default;
+      }
+      button.translate-btn > i {
+        pointer-events: none;
       }
     `;
 

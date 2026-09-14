@@ -43,15 +43,11 @@ Things to know before using a custom endpoint:
 
 ## How It Works
 
-A new **"Translate"** button will appear in the header of the sheet where the document is edited:  
-![Before translation](./images/before_translation.png)
+A **Translate** icon button (<img src="./images/fa-language.svg" alt="fa-language" width="16" height="16" />&nbsp;Font Awesome `fa-language`) appears in the sheet header, next to Foundry's own window controls, wherever the document is edited. Hovering shows a tooltip.
 
 For a journal page, open the page for editing first: the button is in the page editor, not in the page as you read it. Whatever the editor currently holds is what gets translated, including edits you have not saved yet.
 
-After clicking it, a spinner will appear. Wait for it to finish:  
-![After translation](./images/during_translation.png)
-
-The page will automatically close when finished, and the translation should be in place.
+Clicking it swaps the icon for a spinner while the translation runs. The sheet closes automatically when it finishes, and the translation is in place.
 
 ---
 
