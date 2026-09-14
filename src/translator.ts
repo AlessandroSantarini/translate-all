@@ -1,5 +1,6 @@
 import { TranslateAllSettingHandler } from "handlers/settings-handler";
 import { MAX_CUSTOM_PROMPT_LENGTH, SupportedLanguages, SupportedSystems } from "types";
+import { sha256Hex } from "util/hash";
 
 export class Translator {
   static async translate(description: string): Promise<string | undefined> {
@@ -77,12 +78,35 @@ export class Translator {
     );
   }
 
-  private static reportHttpError(response: Response, baseUrl: string): void {
+  private static async reportHttpError(response: Response, baseUrl: string): Promise<void> {
+    const detail = await Translator.extractErrorDetail(response);
     if (response.status === 401 || response.status === 403) {
-      ui?.notifications?.error(`API key rejected by the endpoint (HTTP ${response.status}).`);
+      ui?.notifications?.error(
+        `API key rejected by the endpoint (HTTP ${response.status})${detail ? `: ${detail}` : "."}`,
+      );
       return;
     }
-    ui?.notifications?.error(`API call to ${baseUrl} failed (HTTP ${response.status} ${response.statusText}).`);
+    ui?.notifications?.error(
+      `API call to ${baseUrl} failed (HTTP ${response.status} ${response.statusText})${detail ? `: ${detail}` : "."}`,
+    );
+  }
+
+  // OpenAI-compatible endpoints return { error: { message, ... } }; fall back to raw text otherwise.
+  private static async extractErrorDetail(response: Response): Promise<string | undefined> {
+    try {
+      const body = await response.clone().text();
+      if (!body) return undefined;
+      try {
+        const parsed = JSON.parse(body);
+        const message = parsed?.error?.message ?? parsed?.message;
+        if (typeof message === "string" && message) return message;
+      } catch {
+        // not JSON, fall through
+      }
+      return body.slice(0, 300);
+    } catch {
+      return undefined;
+    }
   }
 
   // Credentials default to the saved settings, but can be supplied by the
@@ -121,7 +145,7 @@ export class Translator {
     }
 
     if (!response.ok) {
-      Translator.reportHttpError(response, baseUrl);
+      await Translator.reportHttpError(response, baseUrl);
       return undefined;
     }
 
@@ -144,12 +168,7 @@ export class Translator {
   // to any of them yields a different key, so a stale entry is never served.
   private static async computeCacheKey(prompt: string, model: string, baseUrl: string): Promise<string> {
     const input = [prompt, model, Translator.normalizeBaseUrl(baseUrl)].join("\u0001");
-    const data = new TextEncoder().encode(input);
-    const buf = await crypto.subtle.digest("SHA-256", data);
-    return Array.from(new Uint8Array(buf))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("")
-      .slice(0, 16);
+    return (await sha256Hex(input)).slice(0, 16);
   }
 
   static async translateWithChatGPT(description: string): Promise<string | undefined> {
@@ -166,6 +185,12 @@ export class Translator {
     const system = TranslateAllSettingHandler.getSetting("translate-all", "targetSystem");
     const language = TranslateAllSettingHandler.getSetting("translate-all", "targetLanguage");
     const model = TranslateAllSettingHandler.getSetting("translate-all", "targetModel");
+    if (!model || typeof model !== "string" || !model.trim()) {
+      ui?.notifications?.error(
+        "Target model is not configured. Open the module settings, pick a model from the list, and save.",
+      );
+      return undefined;
+    }
     const prompt = await Translator.generatePrompt(system, language, description);
 
     const cacheKey = TranslateAllSettingHandler.isCacheEnabled()
@@ -197,7 +222,7 @@ export class Translator {
     }
 
     if (!response.ok) {
-      Translator.reportHttpError(response, baseUrl);
+      await Translator.reportHttpError(response, baseUrl);
       return undefined;
     }
 

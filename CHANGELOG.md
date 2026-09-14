@@ -1,3 +1,9 @@
+# 2.1.5
+- **Cache and TTS work over plain HTTP**: hashing now falls back to a pure-JS SHA-256 when `crypto.subtle` is unavailable (e.g. a GM connecting from a LAN device over HTTP, which is not a Secure Context). Previously the translation cache and the TTS Generate button both crashed with `Cannot read properties of undefined (reading 'digest')`, and on TTS the exception aborted button injection so no read-aloud controls appeared at all. Hashes match the ones produced under HTTPS, so existing cache entries and TTS filenames remain valid.
+- **API errors now show the endpoint's real reason**: HTTP failures from the translation and `/models` calls include the OpenAI-compatible `error.message` body (e.g. `"you must provide a model parameter"`) instead of just a bare status code.
+- **Clear message when the Target Model is empty**: translations no longer send a broken request when the model setting is blank; a toast prompts you to pick one in module settings.
+- **Model list refresh preserves your selection**: the refresh button next to Target Model now keeps the saved model as an option even if the endpoint stops listing it (shown as `"<id> (not listed by endpoint)"`), so saving the form after a refresh cannot silently blank the setting.
+
 # 2.1.4
 - **Local translation cache**: successful translations are now cached in this browser and reused when the same text is translated again with the same prompt, model and endpoint, so the same content is not billed twice. Entries are keyed by a SHA-256 of prompt + model + endpoint, so changing any of them (language, system, custom prompt, target model, custom endpoint) produces a fresh entry rather than a stale hit. Storage is client-scoped, capped at 300 entries with oldest-first eviction, and never reaches the world database or other players.
   - New **Cache Translations Locally** toggle (on by default) in module settings turns the cache off.

@@ -1,5 +1,6 @@
 import { SheetLikeApp, SupportedSystems } from "../types";
 import { TranslateAllSettingHandler } from "./settings-handler";
+import { sha256Hex } from "../util/hash";
 
 type PlayState = "disabled" | "idle" | "loading" | "playing" | "paused";
 type GenState = "idle" | "loading" | "regenerate";
@@ -307,12 +308,7 @@ export class TTSHandler {
 
   private static async computeHash(...parts: string[]): Promise<string> {
     const input = parts.join("\u0001");
-    const data = new TextEncoder().encode(input);
-    const buf = await crypto.subtle.digest("SHA-256", data);
-    return Array.from(new Uint8Array(buf))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("")
-      .slice(0, 16);
+    return (await sha256Hex(input)).slice(0, 16);
   }
 
   private static setGenButtonState(btn: HTMLButtonElement, state: GenState): void {

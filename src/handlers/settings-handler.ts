@@ -314,6 +314,15 @@ export class TranslateAllSettingHandler {
     const previous = select.value;
     select.replaceChildren();
 
+    // Preserve the currently-saved model even if the endpoint no longer lists it,
+    // so submitting the form after a refresh cannot silently overwrite it with "".
+    if (previous && !Object.hasOwn(choices, previous)) {
+      const option = document.createElement("option");
+      option.value = previous;
+      option.textContent = `${previous} (not listed by endpoint)`;
+      select.append(option);
+    }
+
     for (const [value, label] of Object.entries(choices)) {
       const option = document.createElement("option");
       option.value = value;
@@ -321,8 +330,7 @@ export class TranslateAllSettingHandler {
       select.append(option);
     }
 
-    // Keep the current selection when the endpoint still offers it.
-    if (previous && Object.hasOwn(choices, previous)) {
+    if (previous) {
       select.value = previous;
     }
   }
