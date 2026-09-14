@@ -1,4 +1,9 @@
 {
+  "translate-all.settings.section.translation": "Translation",
+  "translate-all.settings.section.connection": "Connection",
+  "translate-all.settings.section.prompt": "Prompt",
+  "translate-all.settings.section.cache": "Cache",
+  "translate-all.settings.section.tts": "Text-to-Speech (experimental, PF2E only)",
   "translate-all.settings.apiKey.name": "OpenAI API Key",
   "translate-all.settings.apiKey.hint": "Your secret API key to access ChatGPT. Stored in this browser only, so it is never sent to your players. Each GM enters their own.",
   "translate-all.settings.apiEndpoint.name": "API Endpoint",
