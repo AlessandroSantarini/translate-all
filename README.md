@@ -18,7 +18,7 @@ into your specified language.
 1. Visit [https://platform.openai.com/](https://platform.openai.com/)
 2. Get your API key: [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)  
    - ⚠️ **Important:** The key will only be shown once. Copy it and store it somewhere safe.  
-   - Set a **spending limit**. I'm using `o4-mini`, which is very affordable. Still, set a budget — I'm not responsible for any charges.  
+   - Set a **spending limit**. A small model such as `gpt-5-mini` is very affordable. Still, set a budget — I'm not responsible for any charges.  
    - You'll get a free trial with some usage credits.  
    - Costs are generally low and depend on how many words you translate. Check [OpenAI pricing](https://openai.com/pricing).
 3. Enter the API key in the FoundryVTT module settings. The key is stored in your browser rather than in the world, so your players never receive it. Enter it again if you run Foundry from a different browser, and each GM uses their own.
@@ -94,7 +94,7 @@ In module settings, scroll to the TTS section and:
 
 ## Options
 
-- **Minimum Role to Translate** (Game Master by default) controls who sees the Translate button. Translating spends the API key configured for the world, so lowering this lets those users spend it too.
+- **Minimum Role to Translate** (Gamemaster by default) controls who sees the Translate button. Translating spends the API key configured for the world, so lowering this lets those users spend it too.
 - **Output Mode**: choose what happens with the translated text:
   - **Replace the original text** (default): overwrites the description in place, as before.
   - **Create a translated copy**: leaves the original untouched and creates a copy with the target language appended to its name (items are created in the same folder, journal pages inside the same journal entry).
@@ -103,11 +103,11 @@ In module settings, scroll to the TTS section and:
 - **Prompt Template File**: select a text file containing your prompt. Used only when the custom prompt is empty.
 - If you would like to use the default prompt, leave both the custom prompt and the prompt file selection empty.
 - The default prompt asks the model to keep the HTML structure, the game terms and the Foundry reference syntax (`@UUID`, `@Check`, `@Damage`, `&Reference`, inline rolls) untouched. A custom prompt or a prompt file replaces the default entirely, so repeat those instructions in your own prompt if you rely on them.
-- **Cache Translations Locally** (on by default) reuses a previous translation instead of calling the API when the same text is translated again.
+- **Enable Translation Cache** (on by default) reuses a previous translation instead of calling the API when the same text is translated again.
   - The cache lives in your browser only. It is not shared with other players, other browsers, or the world database.
   - Entries are keyed by prompt + model + endpoint, so changing the prompt, language, game system, model, or endpoint produces new entries rather than serving a stale translation.
   - It holds at most 300 entries; the oldest are dropped first.
-  - Use the **Clear Cache** button next to the setting to discard everything cached in this browser.
+  - Use the **Clear Translation Cache** button next to the setting to discard everything cached in this browser.
 
 ---
 
