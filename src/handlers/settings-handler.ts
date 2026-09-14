@@ -52,10 +52,11 @@ export class TranslateAllSettingHandler {
       type: String,
       default: OutputModes.REPLACE,
       choices: {
-        [OutputModes.REPLACE]: "Replace the original text",
-        [OutputModes.DUPLICATE]: "Create a translated copy",
-        [OutputModes.APPEND]: "Append translation after the original",
-        [OutputModes.PREPEND]: "Prepend translation before the original",
+        // The settings form localizes choice labels, so these are i18n keys.
+        [OutputModes.REPLACE]: "translate-all.settings.outputMode.choices.replace",
+        [OutputModes.DUPLICATE]: "translate-all.settings.outputMode.choices.duplicate",
+        [OutputModes.APPEND]: "translate-all.settings.outputMode.choices.append",
+        [OutputModes.PREPEND]: "translate-all.settings.outputMode.choices.prepend",
       },
     },
     minimumRole: {
@@ -70,10 +71,11 @@ export class TranslateAllSettingHandler {
       // in the hands of the GM.
       default: String(CONST.USER_ROLES.GAMEMASTER),
       choices: {
-        [String(CONST.USER_ROLES.PLAYER)]: "Player",
-        [String(CONST.USER_ROLES.TRUSTED)]: "Trusted Player",
-        [String(CONST.USER_ROLES.ASSISTANT)]: "Assistant GM",
-        [String(CONST.USER_ROLES.GAMEMASTER)]: "Game Master",
+        // Foundry's own role names, so language packs for the core translate them.
+        [String(CONST.USER_ROLES.PLAYER)]: "USER.RolePlayer",
+        [String(CONST.USER_ROLES.TRUSTED)]: "USER.RoleTrusted",
+        [String(CONST.USER_ROLES.ASSISTANT)]: "USER.RoleAssistant",
+        [String(CONST.USER_ROLES.GAMEMASTER)]: "USER.RoleGamemaster",
       },
     },
     apiEndpoint: {
