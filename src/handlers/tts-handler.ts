@@ -25,7 +25,9 @@ export class TTSHandler {
     const root = TTSHandler.resolveRootElement(app, html);
     if (!root) return;
 
-    const paragraphs = Array.from(root.querySelectorAll<HTMLElement>("p.read-aloud"));
+    // Match both `<p class="read-aloud">` and `<p>` nested inside a `.read-aloud` container
+    // (the latter is the common shape for multi-paragraph read-aloud blocks in PF2E content).
+    const paragraphs = Array.from(root.querySelectorAll<HTMLElement>("p.read-aloud, .read-aloud p"));
     if (paragraphs.length === 0) return;
 
     TTSHandler.ensureStyles();
