@@ -258,15 +258,17 @@ export class TranslateAllSettingHandler {
   }
 
   // The settings form is one flat list, seventeen rows long with TTS. Each
-  // block gets a heading, which marks where translation ends and the
-  // experimental TTS block begins and keeps the three connection settings
-  // visibly together.
+  // block gets a heading inserted as a direct sibling of its first setting,
+  // so the parent form's layout is unchanged. A wrapping element with
+  // display:contents would seem cleaner, but v14's SettingsConfig lays the
+  // pane out with rules that leave large vertical gaps around such wrappers.
   static injectSectionHeaders(html: unknown): void {
     const root = TranslateAllSettingHandler.resolveRootElement(html);
     if (!root) return;
 
     TranslateAllSettingHandler.ensureSectionStyles();
 
+    const sections: { heading: HTMLElement; groups: HTMLElement[] }[] = [];
     for (const [section, keys] of Object.entries(SETTING_SECTIONS)) {
       // Only the settings actually on the form: users who cannot modify world
       // settings get the client ones alone, so a block may be partial or
@@ -275,20 +277,33 @@ export class TranslateAllSettingHandler {
         .map((key) => root.querySelector(`[name="translate-all.${key}"]`)?.closest(".form-group"))
         .filter((group): group is HTMLElement => group instanceof HTMLElement);
       const first = groups.at(0);
-      if (!first || first.parentElement?.classList.contains("translate-all-section")) continue;
-
-      // The heading and its settings share a wrapper that does not take part
-      // in layout, so the settings search, which hides non-matching entries,
-      // can hide the heading too once none of its settings are left.
-      const block = document.createElement("div");
-      block.className = "translate-all-section";
+      if (!first) continue;
+      if (first.previousElementSibling?.classList.contains("translate-all-section-heading")) {
+        const existing = first.previousElementSibling as HTMLElement;
+        sections.push({ heading: existing, groups });
+        continue;
+      }
 
       const heading = document.createElement("h3");
+      heading.className = "translate-all-section-heading";
+      heading.dataset.section = section;
       heading.textContent = game.i18n?.localize(`translate-all.settings.section.${section}`) ?? section;
-
-      first.before(block);
-      block.append(heading, ...groups);
+      first.before(heading);
+      sections.push({ heading, groups });
     }
+
+    // Follow the settings search: when it hides every setting under a
+    // heading, hide the heading too so no orphan title is left behind.
+    const update = () => {
+      for (const { heading, groups } of sections) {
+        heading.hidden = groups.every((g) => g.hidden);
+      }
+    };
+    const observer = new MutationObserver(update);
+    for (const { groups } of sections) {
+      for (const g of groups) observer.observe(g, { attributes: true, attributeFilter: ["hidden"] });
+    }
+    update();
   }
 
   private static ensureSectionStyles(): void {
@@ -299,20 +314,14 @@ export class TranslateAllSettingHandler {
     // Sized from a theme variable and ruled in a tint of the text color, so
     // the heading reads the same in the light and dark themes.
     style.textContent = `
-      div.translate-all-section {
-        display: contents;
-      }
-      div.translate-all-section:not(:has(> .form-group:not([hidden]))) {
-        display: none;
-      }
-      div.translate-all-section > h3 {
-        margin: 0.5rem 0 0;
+      h3.translate-all-section-heading {
+        margin: 0.5rem 0 0.25rem;
         padding-bottom: 0.25rem;
         font-size: var(--font-size-18, 1.125rem);
         border-bottom: 1px solid color-mix(in srgb, currentColor 35%, transparent);
       }
-      div.translate-all-section:first-child > h3 {
-        margin-top: 0;
+      h3.translate-all-section-heading[hidden] {
+        display: none;
       }
     `;
     document.head.append(style);
