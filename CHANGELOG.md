@@ -1,3 +1,6 @@
+# 2.1.9
+- **TTS buttons now appear on multi-paragraph read-aloud blocks**: PF2E content frequently wraps read-aloud text as `<div class="read-aloud"><p>…</p><p>…</p></div>`, where the `read-aloud` class sits on the surrounding `<div>` and not on each `<p>`. The old selector only matched `<p class="read-aloud">` and silently skipped these blocks, so Generate/Play controls never showed up on the long boxed-text passages. Paragraphs inside a `.read-aloud` container are now picked up as well, one Generate/Play pair per paragraph as before.
+
 # 2.1.8
 - **Translate button is now an icon control**: the full-width "TRANSLATE DESCRIPTION" text button is replaced by a compact `fa-language` icon in the sheet header, matching the look of Foundry's own header controls. The label and tooltip are localized (they used to be a hardcoded English string), and the loading state is now a spinning icon instead of a "Translating…" text swap.
 
