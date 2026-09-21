@@ -37,6 +37,7 @@ Hooks.once("init", async () => {
 });
 
 Hooks.on("renderSettingsConfig", (_app: unknown, html: unknown) => {
+  TranslateAllSettingHandler.injectSectionHeaders(html);
   TranslateAllSettingHandler.enhanceCustomPromptField(html);
   TranslateAllSettingHandler.enhanceModelField(html);
   TranslateAllSettingHandler.maskSecretFields(html);

@@ -12,6 +12,16 @@ import {
 // of each.
 const MODEL_SUGGESTIONS_ID = "translate-all-model-suggestions";
 
+// Blocks of the settings form, in display order, with the settings each one
+// holds. Registration follows the same order.
+const SETTING_SECTIONS = {
+  translation: ["targetSystem", "targetLanguage", "outputMode", "minimumRole"],
+  connection: ["apiEndpoint", "apiKey", "targetModel"],
+  prompt: ["customPrompt", "promptTemplatePath"],
+  cache: ["cacheEnabled"],
+  tts: ["ttsEnabled", "ttsApiEndpoint", "ttsApiKey", "ttsModel", "ttsVoice", "ttsInstructions", "ttsFolderPath"],
+} as const;
+
 export class TranslateAllSettingHandler {
   readonly settings = {
     targetSystem: {
@@ -25,24 +35,6 @@ export class TranslateAllSettingHandler {
         [SupportedSystems.DND5E]: "D&D 5e",
         [SupportedSystems.PATHFINDER2E]: "Pathfinder 2e",
       },
-    },
-    // Client scope: Foundry delivers world settings to every connected
-    // client, which would hand the key to the players.
-    apiKey: {
-      name: "translate-all.settings.apiKey.name",
-      hint: "translate-all.settings.apiKey.hint",
-      scope: "client",
-      config: true,
-      type: String,
-      default: "",
-    },
-    apiEndpoint: {
-      name: "translate-all.settings.apiEndpoint.name",
-      hint: "translate-all.settings.apiEndpoint.hint",
-      scope: "world",
-      config: true,
-      type: String,
-      default: "https://api.openai.com/v1",
     },
     targetLanguage: {
       name: "translate-all.settings.language.name",
@@ -60,10 +52,11 @@ export class TranslateAllSettingHandler {
       type: String,
       default: OutputModes.REPLACE,
       choices: {
-        [OutputModes.REPLACE]: "Replace the original text",
-        [OutputModes.DUPLICATE]: "Create a translated copy",
-        [OutputModes.APPEND]: "Append translation after the original",
-        [OutputModes.PREPEND]: "Prepend translation before the original",
+        // The settings form localizes choice labels, so these are i18n keys.
+        [OutputModes.REPLACE]: "translate-all.settings.outputMode.choices.replace",
+        [OutputModes.DUPLICATE]: "translate-all.settings.outputMode.choices.duplicate",
+        [OutputModes.APPEND]: "translate-all.settings.outputMode.choices.append",
+        [OutputModes.PREPEND]: "translate-all.settings.outputMode.choices.prepend",
       },
     },
     minimumRole: {
@@ -78,11 +71,30 @@ export class TranslateAllSettingHandler {
       // in the hands of the GM.
       default: String(CONST.USER_ROLES.GAMEMASTER),
       choices: {
-        [String(CONST.USER_ROLES.PLAYER)]: "Player",
-        [String(CONST.USER_ROLES.TRUSTED)]: "Trusted Player",
-        [String(CONST.USER_ROLES.ASSISTANT)]: "Assistant GM",
-        [String(CONST.USER_ROLES.GAMEMASTER)]: "Game Master",
+        // Foundry's own role names, so language packs for the core translate them.
+        [String(CONST.USER_ROLES.PLAYER)]: "USER.RolePlayer",
+        [String(CONST.USER_ROLES.TRUSTED)]: "USER.RoleTrusted",
+        [String(CONST.USER_ROLES.ASSISTANT)]: "USER.RoleAssistant",
+        [String(CONST.USER_ROLES.GAMEMASTER)]: "USER.RoleGamemaster",
       },
+    },
+    apiEndpoint: {
+      name: "translate-all.settings.apiEndpoint.name",
+      hint: "translate-all.settings.apiEndpoint.hint",
+      scope: "world",
+      config: true,
+      type: String,
+      default: "https://api.openai.com/v1",
+    },
+    // Client scope: Foundry delivers world settings to every connected
+    // client, which would hand the key to the players.
+    apiKey: {
+      name: "translate-all.settings.apiKey.name",
+      hint: "translate-all.settings.apiKey.hint",
+      scope: "client",
+      config: true,
+      type: String,
+      default: "",
     },
     targetModel: {
       name: "translate-all.settings.model.name",
@@ -206,12 +218,16 @@ export class TranslateAllSettingHandler {
   async init(): Promise<void> {
     const gameSettings = game.settings!;
 
+    // Registration order is display order: the settings form renders the
+    // entries of a namespace in the order they were registered, and the
+    // section headers injected on render rely on it.
     gameSettings.register("translate-all", "targetSystem", this.settings.targetSystem);
-    gameSettings.register("translate-all", "apiKey", this.settings.apiKey);
-    gameSettings.register("translate-all", "apiEndpoint", this.settings.apiEndpoint);
     gameSettings.register("translate-all", "targetLanguage", this.settings.targetLanguage);
     gameSettings.register("translate-all", "outputMode", this.settings.outputMode);
     gameSettings.register("translate-all", "minimumRole", this.settings.minimumRole);
+
+    gameSettings.register("translate-all", "apiEndpoint", this.settings.apiEndpoint);
+    gameSettings.register("translate-all", "apiKey", this.settings.apiKey);
 
     const models = await Translator.getModels();
     const targetModelConfig = {
@@ -239,6 +255,76 @@ export class TranslateAllSettingHandler {
     key: K,
   ): ClientSettings.SettingInitializedType<"translate-all", K> {
     return game.settings!.get(namespace, key);
+  }
+
+  // The settings form is one flat list, seventeen rows long with TTS. Each
+  // block gets a heading inserted as a direct sibling of its first setting,
+  // so the parent form's layout is unchanged. A wrapping element with
+  // display:contents would seem cleaner, but v14's SettingsConfig lays the
+  // pane out with rules that leave large vertical gaps around such wrappers.
+  static injectSectionHeaders(html: unknown): void {
+    const root = TranslateAllSettingHandler.resolveRootElement(html);
+    if (!root) return;
+
+    TranslateAllSettingHandler.ensureSectionStyles();
+
+    const sections: { heading: HTMLElement; groups: HTMLElement[] }[] = [];
+    for (const [section, keys] of Object.entries(SETTING_SECTIONS)) {
+      // Only the settings actually on the form: users who cannot modify world
+      // settings get the client ones alone, so a block may be partial or
+      // missing entirely.
+      const groups = keys
+        .map((key) => root.querySelector(`[name="translate-all.${key}"]`)?.closest(".form-group"))
+        .filter((group): group is HTMLElement => group instanceof HTMLElement);
+      const first = groups.at(0);
+      if (!first) continue;
+      if (first.previousElementSibling?.classList.contains("translate-all-section-heading")) {
+        const existing = first.previousElementSibling as HTMLElement;
+        sections.push({ heading: existing, groups });
+        continue;
+      }
+
+      const heading = document.createElement("h3");
+      heading.className = "translate-all-section-heading";
+      heading.dataset.section = section;
+      heading.textContent = game.i18n?.localize(`translate-all.settings.section.${section}`) ?? section;
+      first.before(heading);
+      sections.push({ heading, groups });
+    }
+
+    // Follow the settings search: when it hides every setting under a
+    // heading, hide the heading too so no orphan title is left behind.
+    const update = () => {
+      for (const { heading, groups } of sections) {
+        heading.hidden = groups.every((g) => g.hidden);
+      }
+    };
+    const observer = new MutationObserver(update);
+    for (const { groups } of sections) {
+      for (const g of groups) observer.observe(g, { attributes: true, attributeFilter: ["hidden"] });
+    }
+    update();
+  }
+
+  private static ensureSectionStyles(): void {
+    if (document.getElementById("translate-all-section-style")) return;
+
+    const style = document.createElement("style");
+    style.id = "translate-all-section-style";
+    // Sized from a theme variable and ruled in a tint of the text color, so
+    // the heading reads the same in the light and dark themes.
+    style.textContent = `
+      h3.translate-all-section-heading {
+        margin: 0.5rem 0 0.25rem;
+        padding-bottom: 0.25rem;
+        font-size: var(--font-size-18, 1.125rem);
+        border-bottom: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+      }
+      h3.translate-all-section-heading[hidden] {
+        display: none;
+      }
+    `;
+    document.head.append(style);
   }
 
   // Replaces the single-line text input of the customPrompt setting with a
@@ -446,7 +532,7 @@ export class TranslateAllSettingHandler {
     return dropped;
   }
 
-  // Injects a Clear Cache button next to the cacheEnabled checkbox in the
+  // Injects a Clear Translation Cache button next to the cacheEnabled checkbox in the
   // settings form. Uses text nodes so localized strings are never parsed as HTML.
   static injectClearCacheButton(html: unknown): void {
     const root = TranslateAllSettingHandler.resolveRootElement(html);
@@ -466,7 +552,9 @@ export class TranslateAllSettingHandler {
     icon.className = "fas fa-trash";
     button.appendChild(icon);
     button.appendChild(
-      document.createTextNode(` ${game.i18n?.localize("translate-all.settings.cache.clear.label") ?? "Clear Cache"}`),
+      document.createTextNode(
+        ` ${game.i18n?.localize("translate-all.settings.cache.clear.label") ?? "Clear Translation Cache"}`,
+      ),
     );
 
     button.addEventListener("click", async (event) => {
