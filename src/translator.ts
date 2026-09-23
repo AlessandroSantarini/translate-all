@@ -12,15 +12,19 @@ export class Translator {
     if (!path) {
       return "";
     }
-    let promptTemplate = "";
     try {
-      const url = foundry.utils.getRoute(path);
-      promptTemplate = await fetch(url).then((x) => x.text());
+      const response = await fetch(foundry.utils.getRoute(path));
+      // fetch only rejects on a network failure. A path that does not exist
+      // answers 404 with Foundry's HTML error page, which must not become
+      // the prompt.
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} ${response.statusText}`);
+      }
+      return await response.text();
     } catch (err) {
       ui?.notifications?.warn(format("translate-all.notice.prompt.templateUnavailable", { path, error: String(err) }));
+      return "";
     }
-
-    return promptTemplate;
   }
 
   static getCustomPrompt(): string {
