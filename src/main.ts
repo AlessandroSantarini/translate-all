@@ -29,7 +29,7 @@ function hasDocumentName(value: unknown): value is AppWithDocumentName {
 
 Hooks.once("init", async () => {
   if (!game.settings) {
-    ui?.notifications?.error(`Game settings are not available. This module requires Foundry VTT version 10 or later.`);
+    ui?.notifications?.error(`Game settings are not available. This module requires Foundry VTT 13 or later.`);
     return;
   }
   const settingHandler = new TranslateAllSettingHandler();
