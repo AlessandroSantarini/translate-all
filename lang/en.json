@@ -48,5 +48,14 @@
   "translate-all.settings.tts.folderPath.hint": "Path inside the Foundry Data folder where generated audio files are saved (e.g., translateAll/textToSpeech). Files are named by a hash of text+voice+model+instructions so identical passages reuse the same audio.",
   "translate-all.button.translate.label": "Translate",
   "translate-all.button.translate.tooltip": "Translate this description with the configured language and model.",
-  "translate-all.button.translate.loading": "Translating\u2026"
+  "translate-all.button.translate.loading": "Translating\u2026",
+  "translate-all.notice.api.endpointMissing": "API endpoint is not configured. Set it in the module settings.",
+  "translate-all.notice.api.keyMissing": "API key is not configured. Set it in the module settings.",
+  "translate-all.notice.api.unreachable": "Could not reach API endpoint {url}. Check the URL, that the server is running, and that it is reachable from this browser. {error}",
+  "translate-all.notice.api.keyRejected": "API key rejected by the endpoint (HTTP {status}). {detail}",
+  "translate-all.notice.api.callFailed": "API call to {url} failed (HTTP {status} {statusText}). {detail}",
+  "translate-all.notice.api.unexpectedResponse": "API endpoint {url} returned an unexpected response for {route}.",
+  "translate-all.notice.model.missing": "Target model is not configured. Open the module settings and enter a model name.",
+  "translate-all.notice.prompt.templateUnavailable": "Could not load the prompt template file {path}; the default prompt is used instead. {error}",
+  "translate-all.notice.prompt.customTooLong": "Custom prompt ignored: it exceeds {max} characters."
 }
