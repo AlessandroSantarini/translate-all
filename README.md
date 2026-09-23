@@ -94,6 +94,7 @@ In module settings, scroll to the TTS section and:
 
 ## Options
 
+- **Test Connection**, next to the API Key, asks the endpoint for its model list with the endpoint and key typed in the form, without saving them. It confirms the endpoint and the key and refreshes the model suggestions; the model name is not checked. An endpoint that does not serve `/models` reports an HTTP error here even when translation works.
 - **Minimum Role to Translate** (Gamemaster by default) controls who sees the Translate button. Translating spends the API key configured for the world, so lowering this lets those users spend it too.
 - **Output Mode**: choose what happens with the translated text:
   - **Replace the original text** (default): overwrites the description in place, as before.
