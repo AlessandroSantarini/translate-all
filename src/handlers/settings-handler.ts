@@ -398,18 +398,10 @@ export class TranslateAllSettingHandler {
       button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
       try {
-        // Read the credentials currently typed in the form, so the endpoint
-        // can be tested without saving it first.
-        const models = await Translator.getModels({
-          apiKey: TranslateAllSettingHandler.readFieldValue(root, "translate-all.apiKey"),
-          baseUrl: TranslateAllSettingHandler.readFieldValue(root, "translate-all.apiEndpoint"),
-        });
-
+        const models = await TranslateAllSettingHandler.fetchModelsFromForm(root);
         // getModels already reported the specific reason on failure.
         if (!models) return;
-
-        TranslateAllSettingHandler.repopulateSuggestions(suggestions, Object.keys(models));
-        ui?.notifications?.info(`Loaded ${Object.keys(models).length} models.`);
+        ui?.notifications?.info(`Loaded ${models.length} models.`);
       } finally {
         button.disabled = false;
         button.innerHTML = previousIcon;
@@ -454,6 +446,82 @@ export class TranslateAllSettingHandler {
     const minimumRole = Number(TranslateAllSettingHandler.getSetting("translate-all", "minimumRole"));
     if (!Number.isFinite(minimumRole)) return game.user?.isGM === true;
     return (game.user?.role ?? 0) >= minimumRole;
+  }
+
+  // Asks the endpoint for its model list with the endpoint and key currently
+  // typed in the form, so both can be tried before they are saved, and feeds
+  // the Target Model suggestions with the answer. Shared by the refresh icon
+  // and the Test Connection button; only their toasts differ.
+  private static async fetchModelsFromForm(root: HTMLElement): Promise<string[] | undefined> {
+    const models = await Translator.getModels({
+      apiKey: TranslateAllSettingHandler.readFieldValue(root, "translate-all.apiKey"),
+      baseUrl: TranslateAllSettingHandler.readFieldValue(root, "translate-all.apiEndpoint"),
+    });
+    if (!models) return undefined;
+
+    const names = Object.keys(models);
+    const suggestions = root.querySelector<HTMLDataListElement>(`#${MODEL_SUGGESTIONS_ID}`);
+    if (suggestions) TranslateAllSettingHandler.repopulateSuggestions(suggestions, names);
+    return names;
+  }
+
+  // A plain "does this endpoint answer with this key" check, next to the key
+  // field. It costs nothing: /models is the only free call an OpenAI-compatible
+  // endpoint offers, so it cannot vouch for the model name, only for the
+  // endpoint and the key.
+  static injectTestConnectionButton(html: unknown): void {
+    const root = TranslateAllSettingHandler.resolveRootElement(html);
+    if (!root) return;
+
+    const input = root.querySelector<HTMLInputElement>('input[name="translate-all.apiKey"]');
+    const container = input?.parentElement;
+    if (!container || container.querySelector("button.translate-all-test-connection")) return;
+
+    const button = document.createElement("button");
+    // Not a submit button: it must not save and close the settings form.
+    button.type = "button";
+    button.className = "translate-all-test-connection";
+    button.style.marginLeft = "4px";
+    button.style.flex = "0 0 auto";
+    button.title = game.i18n?.localize("translate-all.settings.connection.test.hint") ?? "";
+    const icon = document.createElement("i");
+    icon.className = "fas fa-plug";
+    button.appendChild(icon);
+    button.appendChild(
+      document.createTextNode(
+        ` ${game.i18n?.localize("translate-all.settings.connection.test.label") ?? "Test Connection"}`,
+      ),
+    );
+
+    button.addEventListener("click", async () => {
+      const apiKey = TranslateAllSettingHandler.readFieldValue(root, "translate-all.apiKey");
+      const baseUrl = TranslateAllSettingHandler.readFieldValue(root, "translate-all.apiEndpoint");
+      if (!apiKey || !baseUrl) {
+        ui?.notifications?.warn(
+          game.i18n?.localize("translate-all.settings.connection.test.missing") ??
+            "Enter the API Endpoint and API Key first.",
+        );
+        return;
+      }
+
+      button.disabled = true;
+      const previousIcon = icon.className;
+      icon.className = "fas fa-spinner fa-spin";
+      try {
+        const models = await TranslateAllSettingHandler.fetchModelsFromForm(root);
+        // getModels already reported the specific reason on failure.
+        if (!models) return;
+        ui?.notifications?.info(
+          game.i18n?.format("translate-all.settings.connection.test.ok", { count: models.length }) ??
+            `Connection OK: ${models.length} models available.`,
+        );
+      } finally {
+        button.disabled = false;
+        icon.className = previousIcon;
+      }
+    });
+
+    container.appendChild(button);
   }
 
   // The settings form renders every String setting as a plain text input, so

@@ -41,6 +41,7 @@ Hooks.on("renderSettingsConfig", (_app: unknown, html: unknown) => {
   TranslateAllSettingHandler.enhanceCustomPromptField(html);
   TranslateAllSettingHandler.enhanceModelField(html);
   TranslateAllSettingHandler.maskSecretFields(html);
+  TranslateAllSettingHandler.injectTestConnectionButton(html);
   TranslateAllSettingHandler.injectClearCacheButton(html);
 });
 
