@@ -300,6 +300,20 @@ export class HTMLHandler {
     } else if (system === SupportedSystems.PATHFINDER2E) {
       await this.updatePF2EDescription(app, translation, path);
     }
+
+    await HTMLHandler.reopenSheet(app);
+  }
+
+  // The close above is forced by the write ordering, not wanted for itself.
+  // Once the translation is stored, the same sheet is rendered again so the
+  // user gets back what they were looking at, now with the translated text.
+  // A failure here is not reported: the translation is already saved.
+  private static async reopenSheet(app: SheetLikeApp): Promise<void> {
+    try {
+      await app.render(true);
+    } catch {
+      // The document may have gone away, or the sheet may refuse to render.
+    }
   }
 
   private static async closeSheet(app: SheetLikeApp): Promise<void> {
