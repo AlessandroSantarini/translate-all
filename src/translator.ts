@@ -50,7 +50,7 @@ export class Translator {
     }
 
     if (prompt) {
-      return `${prompt}: ${description}`;
+      return `${Translator.fillPlaceholders(prompt, system, language)}: ${description}`;
     }
 
     return `Translate the following ${system} item/spell description into ${language}:\n\n
@@ -58,6 +58,12 @@ export class Translator {
             Reproduce Foundry reference syntax exactly as written, brackets included: @UUID, @Check, @Damage, @Template, &Reference and inline rolls. Only the visible label between curly braces may be translated.
             Do not add any additional code encapsulation or formatting. Just return the translated text.\n\n
             ${description}.`;
+  }
+
+  // A custom prompt or template file is used as written, so the Language and
+  // Game System settings only reach the model where the prompt asks for them.
+  private static fillPlaceholders(prompt: string, system: string, language: string): string {
+    return prompt.replaceAll("{language}", language).replaceAll("{system}", system);
   }
 
   // Normalizes an OpenAI-compatible endpoint URL: trims whitespace and

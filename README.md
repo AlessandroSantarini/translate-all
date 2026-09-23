@@ -94,20 +94,22 @@ In module settings, scroll to the TTS section and:
 
 ## Options
 
+- **Language** is free text and goes to the model exactly as written, so `Spanish (Latin America)` or `archaic English` work as well as `spanish`. The field suggests common language names; saving a name outside the list shows a warning and keeps the value.
 - **Minimum Role to Translate** (Gamemaster by default) controls who sees the Translate button. Translating spends the API key configured for the world, so lowering this lets those users spend it too.
 - **Output Mode**: choose what happens with the translated text:
   - **Replace the original text** (default): overwrites the description in place, as before.
   - **Create a translated copy**: leaves the original untouched and creates a copy with the target language appended to its name (items are created in the same folder, journal pages inside the same journal entry).
   - **Append / Prepend translation**: keeps both texts in the same description, separated by a horizontal rule.
-- **Custom Prompt**: write your translation prompt directly in module settings. When not empty, it takes precedence over the prompt template file. Useful for iterating on translation style without leaving Foundry.
+- **Custom Prompt**: write your translation prompt directly in module settings. When not empty, it takes precedence over the prompt template file. Useful for iterating on translation style without leaving Foundry. The **Clear Custom Prompt** button empties the field; nothing changes until you press Save Changes.
 - **Prompt Template File**: select a text file containing your prompt. Used only when the custom prompt is empty.
+- In a custom prompt or a template file, `{language}` and `{system}` are replaced by the **Language** and **Game System** settings. Without them the prompt is sent as written, so name the language in the prompt itself.
 - If you would like to use the default prompt, leave both the custom prompt and the prompt file selection empty.
 - The default prompt asks the model to keep the HTML structure, the game terms and the Foundry reference syntax (`@UUID`, `@Check`, `@Damage`, `&Reference`, inline rolls) untouched. A custom prompt or a prompt file replaces the default entirely, so repeat those instructions in your own prompt if you rely on them.
 - **Enable Translation Cache** (on by default) reuses a previous translation instead of calling the API when the same text is translated again.
   - The cache lives in your browser only. It is not shared with other players, other browsers, or the world database.
   - Entries are keyed by prompt + model + endpoint, so changing the prompt, language, game system, model, or endpoint produces new entries rather than serving a stale translation.
   - It holds at most 300 entries; the oldest are dropped first.
-  - Use the **Clear Translation Cache** button next to the setting to discard everything cached in this browser.
+  - Use the **Clear Translation Cache** button next to the setting to discard everything cached in this browser. It asks for confirmation first.
 
 ---
 

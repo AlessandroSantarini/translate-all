@@ -11,6 +11,39 @@ import {
 // Ties the model input to its suggestion list; the settings form renders one
 // of each.
 const MODEL_SUGGESTIONS_ID = "translate-all-model-suggestions";
+const LANGUAGE_SUGGESTIONS_ID = "translate-all-language-suggestions";
+// Offered as suggestions, never enforced: the field stays free text because
+// "Spanish (Latin America)" or "archaic English" are things worth asking for.
+const LANGUAGE_SUGGESTIONS = [
+  "english",
+  "spanish",
+  "french",
+  "german",
+  "italian",
+  "portuguese",
+  "brazilian portuguese",
+  "dutch",
+  "polish",
+  "czech",
+  "slovak",
+  "hungarian",
+  "romanian",
+  "russian",
+  "ukrainian",
+  "swedish",
+  "norwegian",
+  "danish",
+  "finnish",
+  "greek",
+  "turkish",
+  "catalan",
+  "japanese",
+  "korean",
+  "chinese",
+  "traditional chinese",
+];
+
+type DialogOptions = NonNullable<Parameters<typeof foundry.applications.api.DialogV2.confirm>[0]>;
 
 // Blocks of the settings form, in display order, with the settings each one
 // holds. Registration follows the same order.
@@ -43,6 +76,7 @@ export class TranslateAllSettingHandler {
       config: true,
       type: String,
       default: SupportedLanguages.ITALIAN,
+      onChange: (value: unknown) => TranslateAllSettingHandler.warnUnknownLanguage(value),
     },
     outputMode: {
       name: "translate-all.settings.outputMode.name",
@@ -346,6 +380,34 @@ export class TranslateAllSettingHandler {
     textarea.style.width = "100%";
     textarea.style.resize = "vertical";
     input.replaceWith(textarea);
+
+    // Empties the field only. Nothing is stored until the form is saved, so
+    // Cancel still brings the prompt back; no confirmation on top of that.
+    // The textarea keeps the full row; the button wraps under it, to the right.
+    textarea.style.flex = "1 1 100%";
+    textarea.parentElement?.style.setProperty("flex-wrap", "wrap");
+    const clear = document.createElement("button");
+    clear.type = "button";
+    clear.className = "translate-all-clear-prompt";
+    clear.style.marginLeft = "auto";
+    clear.style.marginTop = "4px";
+    clear.style.flex = "0 0 auto";
+    clear.title = game.i18n?.localize("translate-all.settings.customPrompt.clear.hint") ?? "";
+    const icon = document.createElement("i");
+    icon.className = "fas fa-eraser";
+    clear.appendChild(icon);
+    clear.appendChild(
+      document.createTextNode(
+        ` ${game.i18n?.localize("translate-all.settings.customPrompt.clear.label") ?? "Clear Custom Prompt"}`,
+      ),
+    );
+    clear.addEventListener("click", (event) => {
+      event.preventDefault();
+      textarea.value = "";
+      textarea.dispatchEvent(new Event("change", { bubbles: true }));
+      textarea.focus();
+    });
+    textarea.after(clear);
   }
 
   // Foundry renders a String setting with choices as a dropdown, which leaves
@@ -417,6 +479,35 @@ export class TranslateAllSettingHandler {
     });
 
     input.after(button);
+  }
+
+  // The language goes to the model exactly as typed, so a typo or a made-up
+  // name lands in the prompt unchanged. The suggestion list is there to pick
+  // from, and warnUnknownLanguage says so when what was saved is not on it.
+  static enhanceLanguageField(html: unknown): void {
+    const root = TranslateAllSettingHandler.resolveRootElement(html);
+    if (!root) return;
+
+    const input = root.querySelector<HTMLInputElement>('input[name="translate-all.targetLanguage"]');
+    if (!input || input.getAttribute("list")) return;
+
+    const suggestions = document.createElement("datalist");
+    suggestions.id = LANGUAGE_SUGGESTIONS_ID;
+    TranslateAllSettingHandler.repopulateSuggestions(suggestions, LANGUAGE_SUGGESTIONS);
+    input.setAttribute("list", suggestions.id);
+    input.autocomplete = "off";
+    input.after(suggestions);
+  }
+
+  // Runs when the setting is saved. Warns and keeps the value: the user may
+  // well mean what they typed.
+  static warnUnknownLanguage(value: unknown): void {
+    const language = typeof value === "string" ? value.trim() : "";
+    if (!language || LANGUAGE_SUGGESTIONS.includes(language.toLowerCase())) return;
+    ui?.notifications?.warn(
+      game.i18n?.format("translate-all.settings.language.unknown", { language }) ??
+        `"${language}" is not a suggested language name. It is sent to the model exactly as typed.`,
+    );
   }
 
   private static readFieldValue(root: HTMLElement, name: string): string | undefined {
@@ -560,11 +651,35 @@ export class TranslateAllSettingHandler {
     button.addEventListener("click", async (event) => {
       event.preventDefault();
       event.stopPropagation();
+      // The button acts at once, outside Save/Cancel, and what it drops costs
+      // API calls to rebuild, so it asks first.
+      const confirmed = await TranslateAllSettingHandler.confirm(
+        "translate-all.settings.cache.clear.label",
+        "translate-all.settings.cache.clear.confirm",
+      );
+      if (!confirmed) return;
       const dropped = await TranslateAllSettingHandler.clearTranslationCache();
       ui?.notifications?.info(`Translation cache cleared (${dropped} entries removed).`);
     });
 
     container.appendChild(button);
+  }
+
+  // Yes/no dialog built from two localized strings. The content is set as
+  // text, never parsed as HTML. Closing the dialog counts as "no".
+  private static async confirm(titleKey: string, contentKey: string): Promise<boolean> {
+    const paragraph = document.createElement("p");
+    paragraph.textContent = game.i18n?.localize(contentKey) ?? contentKey;
+    // Foundry accepts a partial window configuration here; the typings ask
+    // for the whole of it.
+    const window = { title: game.i18n?.localize(titleKey) ?? titleKey } as DialogOptions["window"];
+    const answer = await foundry.applications.api.DialogV2.confirm({
+      window,
+      content: paragraph.outerHTML,
+      rejectClose: false,
+      modal: true,
+    });
+    return answer === true;
   }
 
   // Tolerates anything localStorage may hold: a corrupted or hand-edited value
