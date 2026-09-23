@@ -12,6 +12,8 @@ import {
 // of each.
 const MODEL_SUGGESTIONS_ID = "translate-all-model-suggestions";
 
+type DialogOptions = NonNullable<Parameters<typeof foundry.applications.api.DialogV2.confirm>[0]>;
+
 // Blocks of the settings form, in display order, with the settings each one
 // holds. Registration follows the same order.
 const SETTING_SECTIONS = {
@@ -560,11 +562,35 @@ export class TranslateAllSettingHandler {
     button.addEventListener("click", async (event) => {
       event.preventDefault();
       event.stopPropagation();
+      // The button acts at once, outside Save/Cancel, and what it drops costs
+      // API calls to rebuild, so it asks first.
+      const confirmed = await TranslateAllSettingHandler.confirm(
+        "translate-all.settings.cache.clear.label",
+        "translate-all.settings.cache.clear.confirm",
+      );
+      if (!confirmed) return;
       const dropped = await TranslateAllSettingHandler.clearTranslationCache();
       ui?.notifications?.info(`Translation cache cleared (${dropped} entries removed).`);
     });
 
     container.appendChild(button);
+  }
+
+  // Yes/no dialog built from two localized strings. The content is set as
+  // text, never parsed as HTML. Closing the dialog counts as "no".
+  private static async confirm(titleKey: string, contentKey: string): Promise<boolean> {
+    const paragraph = document.createElement("p");
+    paragraph.textContent = game.i18n?.localize(contentKey) ?? contentKey;
+    // Foundry accepts a partial window configuration here; the typings ask
+    // for the whole of it.
+    const window = { title: game.i18n?.localize(titleKey) ?? titleKey } as DialogOptions["window"];
+    const answer = await foundry.applications.api.DialogV2.confirm({
+      window,
+      content: paragraph.outerHTML,
+      rejectClose: false,
+      modal: true,
+    });
+    return answer === true;
   }
 
   // Tolerates anything localStorage may hold: a corrupted or hand-edited value
