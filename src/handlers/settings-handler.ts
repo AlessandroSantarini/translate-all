@@ -348,6 +348,34 @@ export class TranslateAllSettingHandler {
     textarea.style.width = "100%";
     textarea.style.resize = "vertical";
     input.replaceWith(textarea);
+
+    // Empties the field only. Nothing is stored until the form is saved, so
+    // Cancel still brings the prompt back; no confirmation on top of that.
+    // The textarea keeps the full row; the button wraps under it, to the right.
+    textarea.style.flex = "1 1 100%";
+    textarea.parentElement?.style.setProperty("flex-wrap", "wrap");
+    const clear = document.createElement("button");
+    clear.type = "button";
+    clear.className = "translate-all-clear-prompt";
+    clear.style.marginLeft = "auto";
+    clear.style.marginTop = "4px";
+    clear.style.flex = "0 0 auto";
+    clear.title = game.i18n?.localize("translate-all.settings.customPrompt.clear.hint") ?? "";
+    const icon = document.createElement("i");
+    icon.className = "fas fa-eraser";
+    clear.appendChild(icon);
+    clear.appendChild(
+      document.createTextNode(
+        ` ${game.i18n?.localize("translate-all.settings.customPrompt.clear.label") ?? "Clear Custom Prompt"}`,
+      ),
+    );
+    clear.addEventListener("click", (event) => {
+      event.preventDefault();
+      textarea.value = "";
+      textarea.dispatchEvent(new Event("change", { bubbles: true }));
+      textarea.focus();
+    });
+    textarea.after(clear);
   }
 
   // Foundry renders a String setting with choices as a dropdown, which leaves
