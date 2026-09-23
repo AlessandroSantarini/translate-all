@@ -1,4 +1,5 @@
 import { Translator } from "../translator";
+import { format, localize } from "../util/i18n";
 import {
   MAX_CACHE_ENTRIES,
   MAX_CUSTOM_PROMPT_LENGTH,
@@ -409,7 +410,7 @@ export class TranslateAllSettingHandler {
         if (!models) return;
 
         TranslateAllSettingHandler.repopulateSuggestions(suggestions, Object.keys(models));
-        ui?.notifications?.info(`Loaded ${Object.keys(models).length} models.`);
+        ui?.notifications?.info(format("translate-all.notice.model.listLoaded", { count: Object.keys(models).length }));
       } finally {
         button.disabled = false;
         button.innerHTML = previousIcon;
@@ -489,9 +490,7 @@ export class TranslateAllSettingHandler {
       if (typeof remove === "function") {
         await remove.call(legacy);
       }
-      ui?.notifications?.info(
-        `Translate All: moved the ${key === "apiKey" ? "API key" : "TTS API key"} into this browser and removed it from the world, where players could read it.`,
-      );
+      ui?.notifications?.info(localize(`translate-all.notice.migration.${key}`));
     }
   }
 
@@ -561,7 +560,7 @@ export class TranslateAllSettingHandler {
       event.preventDefault();
       event.stopPropagation();
       const dropped = await TranslateAllSettingHandler.clearTranslationCache();
-      ui?.notifications?.info(`Translation cache cleared (${dropped} entries removed).`);
+      ui?.notifications?.info(format("translate-all.notice.cache.cleared", { count: dropped }));
     });
 
     container.appendChild(button);
@@ -605,7 +604,7 @@ export class TranslateAllSettingHandler {
       await game.settings!.set("translate-all", "translationCache", JSON.stringify(cache));
     } catch (error) {
       // A full localStorage quota must never abort a successful translation.
-      ui?.notifications?.warn(`Could not persist the translation cache. ${error}`);
+      ui?.notifications?.warn(format("translate-all.notice.cache.saveFailed", { error: String(error) }));
     }
   }
 

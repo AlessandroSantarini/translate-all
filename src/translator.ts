@@ -1,6 +1,7 @@
 import { TranslateAllSettingHandler } from "handlers/settings-handler";
 import { MAX_CUSTOM_PROMPT_LENGTH, SupportedLanguages, SupportedSystems } from "types";
 import { sha256Hex } from "util/hash";
+import { format, localize } from "util/i18n";
 
 export class Translator {
   static async translate(description: string): Promise<string | undefined> {
@@ -11,15 +12,19 @@ export class Translator {
     if (!path) {
       return "";
     }
-    let promptTemplate = "";
     try {
-      const url = foundry.utils.getRoute(path);
-      promptTemplate = await fetch(url).then((x) => x.text());
+      const response = await fetch(foundry.utils.getRoute(path));
+      // fetch only rejects on a network failure. A path that does not exist
+      // answers 404 with Foundry's HTML error page, which must not become
+      // the prompt.
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} ${response.statusText}`);
+      }
+      return await response.text();
     } catch (err) {
-      ui?.notifications?.warn(`Could not load prompt template. ${err}`);
+      ui?.notifications?.warn(format("translate-all.notice.prompt.templateUnavailable", { path, error: String(err) }));
+      return "";
     }
-
-    return promptTemplate;
   }
 
   static getCustomPrompt(): string {
@@ -28,7 +33,7 @@ export class Translator {
       return "";
     }
     if (customPrompt.length > MAX_CUSTOM_PROMPT_LENGTH) {
-      ui?.notifications?.warn(`Custom prompt ignored: it exceeds ${MAX_CUSTOM_PROMPT_LENGTH} characters.`);
+      ui?.notifications?.warn(format("translate-all.notice.prompt.customTooLong", { max: MAX_CUSTOM_PROMPT_LENGTH }));
       return "";
     }
     return customPrompt;
@@ -73,21 +78,17 @@ export class Translator {
   }
 
   private static reportConnectionError(baseUrl: string, error: unknown): void {
-    ui?.notifications?.error(
-      `Could not reach API endpoint ${baseUrl}. Check the URL, that the server is running, and that it is reachable from this browser. ${error}`,
-    );
+    ui?.notifications?.error(format("translate-all.notice.api.unreachable", { url: baseUrl, error: String(error) }));
   }
 
   private static async reportHttpError(response: Response, baseUrl: string): Promise<void> {
-    const detail = await Translator.extractErrorDetail(response);
-    if (response.status === 401 || response.status === 403) {
-      ui?.notifications?.error(
-        `API key rejected by the endpoint (HTTP ${response.status})${detail ? `: ${detail}` : "."}`,
-      );
-      return;
-    }
+    const detail = (await Translator.extractErrorDetail(response)) ?? "";
+    const key =
+      response.status === 401 || response.status === 403
+        ? "translate-all.notice.api.keyRejected"
+        : "translate-all.notice.api.callFailed";
     ui?.notifications?.error(
-      `API call to ${baseUrl} failed (HTTP ${response.status} ${response.statusText})${detail ? `: ${detail}` : "."}`,
+      format(key, { url: baseUrl, status: response.status, statusText: response.statusText, detail }).trimEnd(),
     );
   }
 
@@ -126,7 +127,7 @@ export class Translator {
         ? Translator.normalizeBaseUrl(credentials.baseUrl)
         : Translator.getApiBaseUrl();
     if (!baseUrl) {
-      ui?.notifications?.error("API endpoint is not configured. Set it in the module settings.");
+      ui?.notifications?.error(localize("translate-all.notice.api.endpointMissing"));
       return undefined;
     }
 
@@ -151,7 +152,9 @@ export class Translator {
 
     const data = await response.json().catch(() => undefined);
     if (!data || !Array.isArray(data.data)) {
-      ui?.notifications?.error(`API endpoint ${baseUrl} returned an unexpected response for /models.`);
+      ui?.notifications?.error(
+        format("translate-all.notice.api.unexpectedResponse", { url: baseUrl, route: "/models" }),
+      );
       return undefined;
     }
 
@@ -174,21 +177,19 @@ export class Translator {
   static async translateWithChatGPT(description: string): Promise<string | undefined> {
     const apiKey = TranslateAllSettingHandler.getSetting("translate-all", "apiKey");
     if (!apiKey) {
-      ui?.notifications?.error("API key is not configured. Set it in the module settings.");
+      ui?.notifications?.error(localize("translate-all.notice.api.keyMissing"));
       return undefined;
     }
     const baseUrl = Translator.getApiBaseUrl();
     if (!baseUrl) {
-      ui?.notifications?.error("API endpoint is not configured. Set it in the module settings.");
+      ui?.notifications?.error(localize("translate-all.notice.api.endpointMissing"));
       return undefined;
     }
     const system = TranslateAllSettingHandler.getSetting("translate-all", "targetSystem");
     const language = TranslateAllSettingHandler.getSetting("translate-all", "targetLanguage");
     const model = TranslateAllSettingHandler.getSetting("translate-all", "targetModel");
     if (!model || typeof model !== "string" || !model.trim()) {
-      ui?.notifications?.error(
-        "Target model is not configured. Open the module settings, pick a model from the list, and save.",
-      );
+      ui?.notifications?.error(localize("translate-all.notice.model.missing"));
       return undefined;
     }
     const prompt = await Translator.generatePrompt(system, language, description);
@@ -229,7 +230,9 @@ export class Translator {
     const data = await response.json().catch(() => undefined);
     const content = data?.choices?.[0]?.message?.content;
     if (typeof content !== "string" || !content) {
-      ui?.notifications?.error(`API endpoint ${baseUrl} returned an unexpected response for /chat/completions.`);
+      ui?.notifications?.error(
+        format("translate-all.notice.api.unexpectedResponse", { url: baseUrl, route: "/chat/completions" }),
+      );
       return undefined;
     }
 
