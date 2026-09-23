@@ -64,5 +64,10 @@
   "translate-all.notice.copy.saveSourceFailed": "Could not save the edited text before creating the copy. {error}",
   "translate-all.notice.copy.unsupported": "This document type cannot be copied.",
   "translate-all.notice.copy.created": "Translated copy created.",
-  "translate-all.notice.copy.failed": "Could not create the translated copy. {error}"
+  "translate-all.notice.copy.failed": "Could not create the translated copy. {error}",
+  "translate-all.notice.model.listLoaded": "Loaded {count} models.",
+  "translate-all.notice.cache.cleared": "Translation cache cleared ({count} entries removed).",
+  "translate-all.notice.cache.saveFailed": "Could not save the translation cache. {error}",
+  "translate-all.notice.migration.apiKey": "Translate All: moved the API key into this browser and removed it from the world, where players could read it.",
+  "translate-all.notice.migration.ttsApiKey": "Translate All: moved the TTS API key into this browser and removed it from the world, where players could read it."
 }
