@@ -1,6 +1,7 @@
 import { Translator } from "translator";
 import { OutputModes, SheetLikeApp, SupportedSystems } from "types";
 import { TranslateAllSettingHandler } from "./settings-handler";
+import { format, localize } from "../util/i18n";
 
 export class HTMLHandler {
   static async translateApp(
@@ -52,18 +53,16 @@ export class HTMLHandler {
       const editorValue = HTMLHandler.readEditorValue(root, path);
       const source = editorValue ?? description;
       if (!source) {
-        ui?.notifications?.warn("There is nothing to translate yet.");
+        ui?.notifications?.warn(localize("translate-all.notice.translate.nothingToTranslate"));
         return;
       }
 
       HTMLHandler.setButtonLoadingState(btn, true);
 
       try {
+        // Translator.translate already reported the specific reason on failure.
         const translated = await Translator.translate(source);
-        if (!translated) {
-          ui?.notifications?.error("Translation failed or returned empty.");
-          return;
-        }
+        if (!translated) return;
 
         const mode = TranslateAllSettingHandler.getSetting("translate-all", "outputMode");
 
@@ -231,7 +230,7 @@ export class HTMLHandler {
       await document?.update?.({ [path]: source });
       return true;
     } catch (error) {
-      ui?.notifications?.error(`Error saving the edited text before duplicating: ${error}`);
+      ui?.notifications?.error(format("translate-all.notice.copy.saveSourceFailed", { error: String(error) }));
       return false;
     }
   }
@@ -268,7 +267,7 @@ export class HTMLHandler {
   private static async createTranslatedCopy(app: SheetLikeApp, translation: string, path: string): Promise<void> {
     const document = app.document ?? app.object;
     if (!document?.clone) {
-      ui?.notifications?.error("This document cannot be duplicated.");
+      ui?.notifications?.error(localize("translate-all.notice.copy.unsupported"));
       return;
     }
 
@@ -282,9 +281,9 @@ export class HTMLHandler {
       // clone with save creates a sibling document: same folder for world
       // documents, same parent for embedded ones (e.g. journal pages).
       await document.clone(data, { save: true });
-      ui?.notifications?.info("Created translated copy.");
+      ui?.notifications?.info(localize("translate-all.notice.copy.created"));
     } catch (error) {
-      ui?.notifications?.error(`Error creating translated copy: ${error}`);
+      ui?.notifications?.error(format("translate-all.notice.copy.failed", { error: String(error) }));
     }
   }
 
@@ -306,7 +305,7 @@ export class HTMLHandler {
     try {
       await app.close();
     } catch (error) {
-      ui?.notifications?.warn(`Could not close the sheet before saving the translation: ${error}`);
+      ui?.notifications?.warn(format("translate-all.notice.translate.closeSheetFailed", { error: String(error) }));
     }
   }
 
@@ -315,7 +314,7 @@ export class HTMLHandler {
       const item = app.document ?? app.object;
       await item?.update?.({ [path]: translation });
     } catch (error) {
-      ui?.notifications?.error(`Error updating item description: ${error}`);
+      ui?.notifications?.error(format("translate-all.notice.translate.saveFailed", { error: String(error) }));
     }
   }
 
@@ -327,7 +326,7 @@ export class HTMLHandler {
       // in-memory document, so journal translations were lost on reload.
       await item?.update?.({ [path]: translation });
     } catch (error) {
-      ui?.notifications?.error(`Error updating item description: ${error}`);
+      ui?.notifications?.error(format("translate-all.notice.translate.saveFailed", { error: String(error) }));
     }
   }
 }

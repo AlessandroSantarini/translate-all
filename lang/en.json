@@ -57,5 +57,12 @@
   "translate-all.notice.api.unexpectedResponse": "API endpoint {url} returned an unexpected response for {route}.",
   "translate-all.notice.model.missing": "Target model is not configured. Open the module settings and enter a model name.",
   "translate-all.notice.prompt.templateUnavailable": "Could not load the prompt template file {path}; the default prompt is used instead. {error}",
-  "translate-all.notice.prompt.customTooLong": "Custom prompt ignored: it exceeds {max} characters."
+  "translate-all.notice.prompt.customTooLong": "Custom prompt ignored: it exceeds {max} characters.",
+  "translate-all.notice.translate.nothingToTranslate": "There is nothing to translate yet.",
+  "translate-all.notice.translate.closeSheetFailed": "Could not close the sheet before saving the translation. {error}",
+  "translate-all.notice.translate.saveFailed": "Could not save the translation. {error}",
+  "translate-all.notice.copy.saveSourceFailed": "Could not save the edited text before creating the copy. {error}",
+  "translate-all.notice.copy.unsupported": "This document type cannot be copied.",
+  "translate-all.notice.copy.created": "Translated copy created.",
+  "translate-all.notice.copy.failed": "Could not create the translated copy. {error}"
 }
