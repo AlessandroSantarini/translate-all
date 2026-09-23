@@ -69,5 +69,21 @@
   "translate-all.notice.cache.cleared": "Translation cache cleared ({count} entries removed).",
   "translate-all.notice.cache.saveFailed": "Could not save the translation cache. {error}",
   "translate-all.notice.migration.apiKey": "Translate All: moved the API key into this browser and removed it from the world, where players could read it.",
-  "translate-all.notice.migration.ttsApiKey": "Translate All: moved the TTS API key into this browser and removed it from the world, where players could read it."
+  "translate-all.notice.migration.ttsApiKey": "Translate All: moved the TTS API key into this browser and removed it from the world, where players could read it.",
+  "translate-all.notice.tts.noText": "No text found to read aloud.",
+  "translate-all.notice.tts.filePickerUnavailable": "Could not save the audio file: Foundry's file picker is not available.",
+  "translate-all.notice.tts.saved": "Audio saved to {path}.",
+  "translate-all.notice.tts.generateFailed": "Could not generate the audio. {error}",
+  "translate-all.notice.tts.playbackFailed": "Could not play the audio. {error}",
+  "translate-all.notice.tts.loadFailed": "Could not load the audio file.",
+  "translate-all.notice.tts.notConfigured": "TTS endpoint or API key is not configured. Set them in the module settings.",
+  "translate-all.notice.tts.unreachable": "Could not reach the TTS endpoint. {error}",
+  "translate-all.notice.tts.callFailed": "TTS API call failed ({detail}).",
+  "translate-all.button.tts.generate": "Generate audio",
+  "translate-all.button.tts.generating": "Generating audio\u2026",
+  "translate-all.button.tts.regenerate": "Regenerate audio",
+  "translate-all.button.tts.play": "Play audio",
+  "translate-all.button.tts.pause": "Pause audio",
+  "translate-all.button.tts.resume": "Resume audio",
+  "translate-all.button.tts.unavailable": "No audio yet. Generate it first."
 }

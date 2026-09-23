@@ -1,6 +1,7 @@
 import { SheetLikeApp, SupportedSystems } from "../types";
 import { TranslateAllSettingHandler } from "./settings-handler";
 import { sha256Hex } from "../util/hash";
+import { format, localize } from "../util/i18n";
 
 type PlayState = "disabled" | "idle" | "loading" | "playing" | "paused";
 type GenState = "idle" | "loading" | "regenerate";
@@ -91,13 +92,13 @@ export class TTSHandler {
 
     const text = TTSHandler.extractText(paragraph);
     if (!text) {
-      ui?.notifications?.warn("No text found to read aloud.");
+      ui?.notifications?.warn(localize("translate-all.notice.tts.noText"));
       return;
     }
 
     const fp = TTSHandler.getFilePicker();
     if (!fp) {
-      ui?.notifications?.error("Foundry FilePicker is not available.");
+      ui?.notifications?.error(localize("translate-all.notice.tts.filePickerUnavailable"));
       return;
     }
 
@@ -123,9 +124,9 @@ export class TTSHandler {
         TTSHandler.setPlayButtonState(playBtn, "idle");
       }
       TTSHandler.setGenButtonState(genBtn, "regenerate");
-      ui?.notifications?.info(`TTS audio saved: ${folder}/${filename}`);
+      ui?.notifications?.info(format("translate-all.notice.tts.saved", { path: `${folder}/${filename}` }));
     } catch (error) {
-      ui?.notifications?.error(`TTS generation failed. ${error}`);
+      ui?.notifications?.error(format("translate-all.notice.tts.generateFailed", { error: String(error) }));
       TTSHandler.setGenButtonState(genBtn, previousState);
     }
   }
@@ -148,7 +149,7 @@ export class TTSHandler {
         await TTSHandler.currentAudio.play();
         TTSHandler.setPlayButtonState(playBtn, "playing");
       } catch (error) {
-        ui?.notifications?.error(`TTS playback failed. ${error}`);
+        ui?.notifications?.error(format("translate-all.notice.tts.playbackFailed", { error: String(error) }));
         TTSHandler.setPlayButtonState(playBtn, "idle");
       }
       return;
@@ -165,7 +166,7 @@ export class TTSHandler {
       TTSHandler.cleanup(audio);
     });
     audio.addEventListener("error", () => {
-      ui?.notifications?.error("Failed to load TTS audio file.");
+      ui?.notifications?.error(localize("translate-all.notice.tts.loadFailed"));
       TTSHandler.setPlayButtonState(playBtn, "idle");
       TTSHandler.cleanup(audio);
     });
@@ -174,7 +175,7 @@ export class TTSHandler {
     try {
       await audio.play();
     } catch (error) {
-      ui?.notifications?.error(`TTS playback failed. ${error}`);
+      ui?.notifications?.error(format("translate-all.notice.tts.playbackFailed", { error: String(error) }));
       TTSHandler.setPlayButtonState(playBtn, "idle");
       TTSHandler.cleanup(audio);
     }
@@ -216,7 +217,7 @@ export class TTSHandler {
     const instructions = TranslateAllSettingHandler.getSetting("translate-all", "ttsInstructions")?.trim();
 
     if (!apiEndpoint || !apiKey) {
-      ui?.notifications?.error("TTS endpoint or API key is not configured.");
+      ui?.notifications?.error(localize("translate-all.notice.tts.notConfigured"));
       return null;
     }
 
@@ -239,13 +240,13 @@ export class TTSHandler {
         body: JSON.stringify(body),
       });
     } catch (error) {
-      ui?.notifications?.error(`TTS API call failed. ${error}`);
+      ui?.notifications?.error(format("translate-all.notice.tts.unreachable", { error: String(error) }));
       return null;
     }
 
     if (!response?.ok) {
-      const detail = response ? `${response.status} ${response.statusText}` : "no response";
-      ui?.notifications?.error(`TTS API call failed (${detail}).`);
+      const detail = response ? `HTTP ${response.status} ${response.statusText}` : "no response";
+      ui?.notifications?.error(format("translate-all.notice.tts.callFailed", { detail }));
       return null;
     }
 
@@ -318,16 +319,22 @@ export class TTSHandler {
     btn.disabled = state === "loading";
     if (state === "loading") {
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-      btn.title = "Generating audio…";
+      TTSHandler.labelButton(btn, "generating");
     } else if (state === "regenerate") {
       btn.innerHTML = '<i class="fas fa-redo"></i>';
-      btn.title = "Regenerate audio";
-      btn.setAttribute("aria-label", "Regenerate TTS audio");
+      TTSHandler.labelButton(btn, "regenerate");
     } else {
       btn.innerHTML = '<i class="fas fa-download"></i>';
-      btn.title = "Generate audio file";
-      btn.setAttribute("aria-label", "Generate TTS audio");
+      TTSHandler.labelButton(btn, "generate");
     }
+  }
+
+  // One label per state, for the tooltip and for assistive technology alike,
+  // so neither can lag behind the other when the state changes.
+  private static labelButton(btn: HTMLButtonElement, state: string): void {
+    const label = localize(`translate-all.button.tts.${state}`);
+    btn.title = label;
+    btn.setAttribute("aria-label", label);
   }
 
   private static setPlayButtonState(btn: HTMLButtonElement, state: PlayState): void {
@@ -335,18 +342,16 @@ export class TTSHandler {
     btn.disabled = state === "disabled";
     if (state === "disabled") {
       btn.innerHTML = '<i class="fas fa-volume-up"></i>';
-      btn.title = "No audio yet — generate it first";
-      btn.setAttribute("aria-label", "Play TTS (unavailable)");
+      TTSHandler.labelButton(btn, "unavailable");
     } else if (state === "playing") {
       btn.innerHTML = '<i class="fas fa-pause"></i>';
-      btn.title = "Pause playback";
+      TTSHandler.labelButton(btn, "pause");
     } else if (state === "paused") {
       btn.innerHTML = '<i class="fas fa-play"></i>';
-      btn.title = "Resume playback";
+      TTSHandler.labelButton(btn, "resume");
     } else {
       btn.innerHTML = '<i class="fas fa-volume-up"></i>';
-      btn.title = "Play TTS audio";
-      btn.setAttribute("aria-label", "Play TTS audio");
+      TTSHandler.labelButton(btn, "play");
     }
   }
 
