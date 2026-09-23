@@ -11,6 +11,37 @@ import {
 // Ties the model input to its suggestion list; the settings form renders one
 // of each.
 const MODEL_SUGGESTIONS_ID = "translate-all-model-suggestions";
+const LANGUAGE_SUGGESTIONS_ID = "translate-all-language-suggestions";
+// Offered as suggestions, never enforced: the field stays free text because
+// "Spanish (Latin America)" or "archaic English" are things worth asking for.
+const LANGUAGE_SUGGESTIONS = [
+  "english",
+  "spanish",
+  "french",
+  "german",
+  "italian",
+  "portuguese",
+  "brazilian portuguese",
+  "dutch",
+  "polish",
+  "czech",
+  "slovak",
+  "hungarian",
+  "romanian",
+  "russian",
+  "ukrainian",
+  "swedish",
+  "norwegian",
+  "danish",
+  "finnish",
+  "greek",
+  "turkish",
+  "catalan",
+  "japanese",
+  "korean",
+  "chinese",
+  "traditional chinese",
+];
 
 type DialogOptions = NonNullable<Parameters<typeof foundry.applications.api.DialogV2.confirm>[0]>;
 
@@ -45,6 +76,7 @@ export class TranslateAllSettingHandler {
       config: true,
       type: String,
       default: SupportedLanguages.ITALIAN,
+      onChange: (value: unknown) => TranslateAllSettingHandler.warnUnknownLanguage(value),
     },
     outputMode: {
       name: "translate-all.settings.outputMode.name",
@@ -447,6 +479,35 @@ export class TranslateAllSettingHandler {
     });
 
     input.after(button);
+  }
+
+  // The language goes to the model exactly as typed, so a typo or a made-up
+  // name lands in the prompt unchanged. The suggestion list is there to pick
+  // from, and warnUnknownLanguage says so when what was saved is not on it.
+  static enhanceLanguageField(html: unknown): void {
+    const root = TranslateAllSettingHandler.resolveRootElement(html);
+    if (!root) return;
+
+    const input = root.querySelector<HTMLInputElement>('input[name="translate-all.targetLanguage"]');
+    if (!input || input.getAttribute("list")) return;
+
+    const suggestions = document.createElement("datalist");
+    suggestions.id = LANGUAGE_SUGGESTIONS_ID;
+    TranslateAllSettingHandler.repopulateSuggestions(suggestions, LANGUAGE_SUGGESTIONS);
+    input.setAttribute("list", suggestions.id);
+    input.autocomplete = "off";
+    input.after(suggestions);
+  }
+
+  // Runs when the setting is saved. Warns and keeps the value: the user may
+  // well mean what they typed.
+  static warnUnknownLanguage(value: unknown): void {
+    const language = typeof value === "string" ? value.trim() : "";
+    if (!language || LANGUAGE_SUGGESTIONS.includes(language.toLowerCase())) return;
+    ui?.notifications?.warn(
+      game.i18n?.format("translate-all.settings.language.unknown", { language }) ??
+        `"${language}" is not a suggested language name. It is sent to the model exactly as typed.`,
+    );
   }
 
   private static readFieldValue(root: HTMLElement, name: string): string | undefined {
